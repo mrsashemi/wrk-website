@@ -1,29 +1,53 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '@/styles/Home.module.css'
+import React, { useEffect } from 'react'
+import {HomeNav} from '../components/home-nav';
+import { useRasterize } from '@/hooks/useRasterize';
+
+
+// Use refs to create two copies of the UI, one transparent and one hidden that will be sent to WEBGL during the rasterization step.
+export const HomeNavShader = React.forwardRef((props, ref) => {
+  const {serializeThisRef, stateHoldingRef}: Record<string, React.RefObject<HTMLDivElement>> = ref;
+  
+  return (
+    <>
+      <HomeNav ref={stateHoldingRef} />
+      <HomeNav ref={serializeThisRef} />
+    </>
+  )
+})
+
 
 
 export default function Home() {
+  const stateHoldingRef = React.useRef<HTMLDivElement>();
+  const serializeThisRef = React.useRef<HTMLDivElement>();
+  const imgTextureRef = React.useRef<Record<string, string>>();
+
+  useRasterize({
+    serializeThisRef: stateHoldingRef,
+    stateHoldingRef: serializeThisRef,
+    imgTextureRef: imgTextureRef,
+    interaction: false,
+    changeReload: false,
+    events: [],
+  })
+
+  useEffect(() => {
+    console.log(imgTextureRef.current);
+  }, [imgTextureRef.current])
+
   return (
-    <div className='container m-0 w-screen h-screen flex flex-col justify-between' >
-      <nav className='container w-screen h-fit mx-auto flex item-center justify-evenly'>
-        <div>Artworks</div>
-        <div>Photography</div>
-        <div>Generative Art</div>
-      </nav>
-      <div className='container mx-auto w-screen h-fit flex item-center justify-evenly'>
-        <h1>WIZARDS ROBBING KIDS</h1>
-        <div></div>
-        <div></div>
-      </div>
-      <nav className='container w-screen h-fit mx-auto flex item-center justify-evenly'>
-        <div>About</div>
-        <div>Contact</div>
-        <div>Login</div>
-      </nav>
+    <div>
+      <canvas />
+      <img src={`${imgTextureRef.current.DOMImage}`}></img>
+      <HomeNavShader 
+        ref={{
+          stateHoldingRef: stateHoldingRef,
+          serializeThisRef: serializeThisRef,
+        }}
+      />
     </div>
   )
 }
-
-// pseudocode
-// 

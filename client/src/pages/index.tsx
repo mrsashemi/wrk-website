@@ -1,6 +1,3 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '@/styles/Home.module.css'
 import React, { RefObject, useImperativeHandle, useRef } from 'react'
 import {HomeNav} from '../components/home-nav';
 import { useRasterize } from '@/hooks/useRasterize';

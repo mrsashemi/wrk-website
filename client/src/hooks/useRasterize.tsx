@@ -1,7 +1,4 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '@/styles/Home.module.css'
-import React, { SyntheticEvent } from 'react'
+import React from 'react'
 import { useDispatch } from 'react-redux';
 import { setDomImage } from '@/state/slices/canvasSlice';
 

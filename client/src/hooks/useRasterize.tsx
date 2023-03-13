@@ -37,7 +37,6 @@ export const throttle = (delay: number, fn: Function) => {
 export const useRasterize = (props: Props): void => {
     const dispatch = useDispatch();
 
-
     React.useEffect(() => {
         const loadRasterizedDom = async () => {
             const DOMImage = await rasterizeToP5(props);

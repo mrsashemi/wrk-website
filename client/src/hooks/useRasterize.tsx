@@ -1,15 +1,6 @@
 import React from 'react'
-import { useDispatch } from 'react-redux';
-import { setDomImage } from '@/state/slices/canvasSlice';
-
-// Use refs to create two copies of the UI, one transparent and one hidden that will be sent to WEBGL during the rasterization step.
-/*const Source = React.forwardRef(({}, ref) => (
-  <>
-    <SourceInput ref={inputRef} />
-    <SourceInput ref={sourceRef} />
-  </>
-))*/
-
+import { useDispatch, useSelector } from 'react-redux';
+import { getDomImage, setDomImage } from '@/state/slices/canvasSlice';
 
 interface Props {
     serializeThisRef: React.RefObject<HTMLElement>;
@@ -42,16 +33,18 @@ export const useRasterize = (props: Props): void => {
 
         loadRasterizedDom();
     }, []);
+
+    return useSelector(getDomImage);
 }
 
-const rasterizeToP5 = async (props: Props) => {
+export const rasterizeToP5 = async (props: Props) => {
     const result = await rasterizeDomNode(props.serializeThisRef.current!);
     if (!result) return;
-    const {DOMImage, size} = result;
+    const DOMImage = result;
     return DOMImage;
 }
 
-const rasterizeDomNode = async (srcElement: HTMLElement) => {
+export const rasterizeDomNode = async (srcElement: HTMLElement) => {
     if (!srcElement) return;
     const {width, height} = srcElement.getBoundingClientRect();
     const svgDataURI = convertToSVG(srcElement, width, height);
@@ -66,18 +59,12 @@ const rasterizeDomNode = async (srcElement: HTMLElement) => {
     context?.drawImage(img, 0, 0);
     const png = canvas.toDataURL();
 
-    return {
-        DOMImage: png,
-        size: {
-            x: width,
-            y: height
-        }
-    }
+    return png;
 
 }
 
 // this function serializes the source node and turns it into an SVG Data URI
-const convertToSVG = (source: HTMLElement, w: number, h: number) => {
+export const convertToSVG = (source: HTMLElement, w: number, h: number) => {
     const serializedSrc = new XMLSerializer().serializeToString(source);
 
     // we need to escape characters that are not markup text to ensure the src node is properly converted to an SVG
@@ -102,7 +89,7 @@ interface Window {
     };
 }
 
-const createImgFromSVG = (svgURI: string): Promise<HTMLImageElement> => 
+export const createImgFromSVG = (svgURI: string): Promise<HTMLImageElement> => 
     new Promise((resolve, reject) => {
         const img = new window.Image();
         // cors, cross origin allows for images loaded from a foreign object to be used in a canvas.

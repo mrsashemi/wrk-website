@@ -11,9 +11,12 @@ const createJestConfig = nextJest({
 const customJestConfig = {
     // add more setup options before each test is run
     setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+    "modulePaths": {
+        "<rootDir>"
+    },
     moduleNameMapper: {
         //handle module aliases 
-        '^@/src/pages/(.*)$': '<rootDir>/src/pages/$1',
+        '^@/(.*)$': '<rootDir>/src/$1',
     },
     testEnvironment: 'jest-environment-jsdom',
 }

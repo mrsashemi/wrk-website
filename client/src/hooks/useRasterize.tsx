@@ -45,8 +45,6 @@ export const useRasterize = (props: Props): void => {
         }
 
         loadRasterizedDom();
-        //let refreshImg;
-        //let mouseUpHandler;
     }, []);
 }
 
@@ -54,7 +52,6 @@ const rasterizeToP5 = async (props: Props) => {
     const result = await rasterizeDomNode(props.serializeThisRef.current!);
     if (!result) return;
     const {DOMImage, size} = result;
-    //return props.imgTextureRef.current = {DOMImage};
     return DOMImage;
 }
 

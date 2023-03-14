@@ -3,6 +3,8 @@ import {HomeNav} from '../components/home-nav';
 import { useRasterize } from '@/hooks/useRasterize';
 import { useSelector } from 'react-redux';
 import { getDomImage } from '@/state/slices/canvasSlice';
+import { InitialSketch } from '@/sketches/sketch';
+
 
 export type RefHandler = {
   stateHoldingRef: RefObject<HTMLDivElement>,
@@ -17,8 +19,9 @@ export default function Home() {
 
   return (
     <div> 
-      <img src={`${domImage && domImage}`} className='w-fit h-fit pointer-events-none' id='dom-img'></img>
+      <img src={`${domImage && domImage}`} className='invisible w-fit h-fit pointer-events-none absolute inset-0 z-30' id='dom-img'></img>
       <HomeNavShader ref={childRef}/>
+      <InitialSketch />
     </div>
   )
 }
@@ -45,12 +48,12 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
     <React.Fragment>
       <HomeNav 
         ref={stateHoldingRef} 
-        tw_classes={'text-transparent absolute inset-0'}
+        tw_classes={'text-transparent absolute inset-0 z-20'}
         title={title}
         setTitle={setTitle} />
       <HomeNav 
         ref={serializeThisRef} 
-        tw_classes={'invisible absolute inset-0'}
+        tw_classes={'invisible absolute inset-0 z-10'}
         title={title}
         setTitle={setDummy} />
     </React.Fragment>

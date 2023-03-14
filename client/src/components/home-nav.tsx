@@ -1,8 +1,9 @@
-import React from "react"
+import React, { FC, MutableRefObject, useEffect } from "react"
 
 interface HomeProps {
   tw_classes: string;
-
+  title: string;
+  setTitle: React.Dispatch<React.SetStateAction<string>> 
 }
 
 export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttributes<HTMLDivElement>> = React.forwardRef((props, ref) => {
@@ -19,7 +20,9 @@ export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttri
         <div style={{fontSize: "1.5rem", lineHeight: "2rem"}}>Generative Art</div>
       </nav>
       <div style={{width: '100vw', height: 'fit-content', margin: '0px', display: 'flex', alignItems: "center", justifyContent: 'space-around'}}>
-        <h1 style={{fontSize: "1.875rem", lineHeight: "2.25rem"}}>WIZARDS ROBBING KIDS</h1>
+        <h1 style={{fontSize: "1.875rem", lineHeight: "2.25rem"}} 
+          onMouseEnter={() => props.setTitle('WIZARDS ROBBING KIDS')}
+          onMouseLeave={() => props.setTitle('WZRDS')}>{props.title}</h1>
         <div style={{fontSize: "1.5rem", lineHeight: "2rem"}}></div>
         <div style={{fontSize: "1.5rem", lineHeight: "2rem"}}></div>
       </div>

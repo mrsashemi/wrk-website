@@ -5,34 +5,30 @@ import { getDomImage, setDomImage } from '@/state/slices/canvasSlice';
 interface Props {
     serializeThisRef: React.RefObject<HTMLElement>;
     stateHoldingRef: React.RefObject<HTMLElement>;
-    interaction: boolean;
-    changeReload: boolean;
-    events: string[];
-}
-
-export const throttle = (delay: number, fn: Function) => {
-    let finalCall = 0;
-    return (...args: any) => {
-        const now = new Date().getTime();
-        if (now - finalCall < delay) {
-            return;
-        }
-        finalCall = now;
-        return fn(...args);
-    }
+    events: any[];
 }
 
 export const useRasterize = (props: Props): void => {
     const dispatch = useDispatch();
+    const loadRasterizedDom = async () => {
+        const DOMImage = await rasterizeToP5(props);
+        return dispatch(setDomImage(DOMImage));
+    }
     
     React.useEffect(() => {
-        const loadRasterizedDom = async () => {
-            const DOMImage = await rasterizeToP5(props);
-            return dispatch(setDomImage(DOMImage));
-        }
-
         loadRasterizedDom();
+        window.addEventListener('load', () => loadRasterizedDom());
+        window.addEventListener('resize', () => loadRasterizedDom());
+        
+        return () => {
+            window.removeEventListener('load', () => loadRasterizedDom());
+            window.removeEventListener('resize', () => loadRasterizedDom());
+        }
     }, []);
+
+    React.useEffect(() => {
+        loadRasterizedDom();
+    }, props.events);
 }
 
 export const rasterizeToP5 = async (props: Props) => {

@@ -1,4 +1,4 @@
-import React, { RefObject, useImperativeHandle, useRef } from 'react'
+import React, { RefObject, useImperativeHandle, useRef, useState } from 'react'
 import {HomeNav} from '../components/home-nav';
 import { useRasterize } from '@/hooks/useRasterize';
 import { useSelector } from 'react-redux';
@@ -13,6 +13,7 @@ export default function Home() {
   const childRef = useRef<RefHandler>(null);
   const domImage = useSelector(getDomImage);
 
+  
 
   return (
     <div> 
@@ -24,15 +25,15 @@ export default function Home() {
 
 // Use refs to create two copies of the UI, one transparent and one hidden that will be sent to WEBGL during the rasterization step.
 export const HomeNavShader = React.forwardRef((props, ref) => {
+  const [title, setTitle] = useState('WZRDS');
+  const [dummy, setDummy] = useState('');
   const stateHoldingRef = React.useRef<HTMLDivElement>(null);
   const serializeThisRef = React.useRef<HTMLDivElement>(null);
 
   useRasterize({
     serializeThisRef: serializeThisRef,
     stateHoldingRef: stateHoldingRef,
-    interaction: false,
-    changeReload: false,
-    events: [],
+    events: [title],
   })
 
   useImperativeHandle(ref, () => ({
@@ -42,8 +43,16 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
   
   return (
     <React.Fragment>
-      <HomeNav ref={stateHoldingRef} tw_classes={'text-transparent absolute inset-0'} />
-      <HomeNav ref={serializeThisRef} tw_classes={'invisible absolute inset-0'} />
+      <HomeNav 
+        ref={stateHoldingRef} 
+        tw_classes={'text-transparent absolute inset-0'}
+        title={title}
+        setTitle={setTitle} />
+      <HomeNav 
+        ref={serializeThisRef} 
+        tw_classes={'invisible absolute inset-0'}
+        title={title}
+        setTitle={setDummy} />
     </React.Fragment>
   )
 })

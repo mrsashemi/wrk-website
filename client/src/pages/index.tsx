@@ -9,6 +9,19 @@ export type RefHandler = {
   serializeThisRef: RefObject<HTMLDivElement>
 }
 
+export default function Home() {
+  const childRef = useRef<RefHandler>(null);
+  const domImage = useSelector(getDomImage);
+
+
+  return (
+    <div> 
+      <img src={`${domImage && domImage}`} className='w-fit h-fit pointer-events-none' id='dom-img'></img>
+      <HomeNavShader ref={childRef}/>
+    </div>
+  )
+}
+
 // Use refs to create two copies of the UI, one transparent and one hidden that will be sent to WEBGL during the rasterization step.
 export const HomeNavShader = React.forwardRef((props, ref) => {
   const stateHoldingRef = React.useRef<HTMLDivElement>(null);
@@ -34,16 +47,3 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
     </React.Fragment>
   )
 })
-
-export default function Home() {
-  const childRef = useRef<RefHandler>(null);
-  const domImage = useSelector(getDomImage);
-
-
-  return (
-    <div> 
-      <img src={`${domImage && domImage}`} className='w-fit h-fit pointer-events-none' ></img>
-      <HomeNavShader ref={childRef}/>
-    </div>
-  )
-}

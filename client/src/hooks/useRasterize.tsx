@@ -24,7 +24,7 @@ export const throttle = (delay: number, fn: Function) => {
 
 export const useRasterize = (props: Props): void => {
     const dispatch = useDispatch();
-
+    
     React.useEffect(() => {
         const loadRasterizedDom = async () => {
             const DOMImage = await rasterizeToP5(props);
@@ -33,8 +33,6 @@ export const useRasterize = (props: Props): void => {
 
         loadRasterizedDom();
     }, []);
-
-    return useSelector(getDomImage);
 }
 
 export const rasterizeToP5 = async (props: Props) => {
@@ -51,7 +49,6 @@ export const rasterizeDomNode = async (srcElement: HTMLElement) => {
 
     const img: HTMLImageElement = await createImgFromSVG(svgDataURI);
     const canvas: HTMLCanvasElement = document.createElement('canvas');
-
     canvas.width = width;
     canvas.height = height;
 
@@ -60,7 +57,6 @@ export const rasterizeDomNode = async (srcElement: HTMLElement) => {
     const png = canvas.toDataURL();
 
     return png;
-
 }
 
 // this function serializes the source node and turns it into an SVG Data URI
@@ -82,20 +78,16 @@ export const convertToSVG = (source: HTMLElement, w: number, h: number) => {
     )
 }
 
-interface Window {
-    Image: {
-        prototype: HTMLImageElement;
-        new (): HTMLImageElement;
-    };
-}
-
 export const createImgFromSVG = (svgURI: string): Promise<HTMLImageElement> => 
     new Promise((resolve, reject) => {
-        const img = new window.Image();
+        const img = document.createElement('img');
         // cors, cross origin allows for images loaded from a foreign object to be used in a canvas.
         img.crossOrigin = 'anonymous';
         img.onload = () => resolve(img);
-        img.onerror = (e) => reject(e);
+        img.onerror = (e) => {
+            reject(e)
+            svgURI = "LOAD_ERROR";
+        };
         img.src = svgURI;
     })
 

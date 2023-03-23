@@ -1,9 +1,9 @@
-import React, { RefObject, useImperativeHandle, useRef, useState } from 'react'
+import React, { RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import {HomeNav} from '../components/home-nav';
 import { useRasterize } from '@/hooks/useRasterize';
 import { useSelector } from 'react-redux';
 import { getDomImage } from '@/state/slices/canvasSlice';
-import { InitialSketch } from '@/sketches/sketch';
+import { ChickenRipple } from '@/sketches/chickenRipple';
 
 
 export type RefHandler = {
@@ -14,14 +14,13 @@ export type RefHandler = {
 export default function Home() {
   const childRef = useRef<RefHandler>(null);
   const domImage = useSelector(getDomImage);
-
   
 
   return (
     <div> 
-      <img src={`${domImage && domImage}`} className='invisible w-fit h-fit pointer-events-none absolute inset-0 z-30' id='dom-img'></img>
+      {/*<img src={`${domImage && domImage}`} className='invisible w-fit h-fit pointer-events-none absolute inset-0 z-30' id='dom-img' onMouseMove={(e) => findMousePos(e)}></img>*/}
+      <ChickenRipple />
       <HomeNavShader ref={childRef}/>
-      <InitialSketch />
     </div>
   )
 }
@@ -43,6 +42,7 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
     serializeThisRef: serializeThisRef,
     stateHoldingRef: stateHoldingRef
   }));
+
   
   return (
     <React.Fragment>
@@ -50,7 +50,7 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
         ref={stateHoldingRef} 
         tw_classes={'text-transparent absolute inset-0 z-20'}
         title={title}
-        setTitle={setTitle} />
+        setTitle={setTitle}/>
       <HomeNav 
         ref={serializeThisRef} 
         tw_classes={'invisible absolute inset-0 z-10'}

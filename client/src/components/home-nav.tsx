@@ -1,4 +1,6 @@
-import React, { FC, MutableRefObject, useEffect } from "react"
+import { getCanvasSize, setMousePos } from "@/state/slices/canvasSlice";
+import React, { FC, MutableRefObject, useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux";
 
 interface HomeProps {
   tw_classes: string;
@@ -7,13 +9,25 @@ interface HomeProps {
 }
 
 export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttributes<HTMLDivElement>> = React.forwardRef((props, ref) => {
+  const canvasSize = useSelector(getCanvasSize);
+  const dispatch = useDispatch();
 
+
+  function findMousePos(e: any) {
+    let rect = e.target.getBoundingClientRect();
+
+    let scaleX = canvasSize[0]/rect.width;
+    let scaleY = canvasSize[1]/rect.height;
+  
+    dispatch(setMousePos([(e.clientX - rect.left)*scaleX, (e.clientY - rect.top)*scaleY]));
+}
 
   return (
     <div 
-    className={`${props.tw_classes}`}
+    className={`${props.tw_classes} domClient`}
     ref={ref} 
-    style={{width: '100vw', height: '100vh', margin: '0px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontFamily: 'monospace', backgroundColor: 'transparent'}}>
+    onMouseMove={(e) => findMousePos(e)} 
+    style={{width: '100vw', height: '100vh', margin: '0px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontFamily: 'monospace', backgroundColor: 'transparent', color: "white"}}>
       <nav style={{width: '100vw', height: 'fit-content', margin: '0px', display: 'flex', alignItems: "center", justifyContent: 'space-around', marginTop: "0.5rem"}}>
         <div style={{fontSize: "1.5rem", lineHeight: "2rem"}}>Artworks</div>
         <div style={{fontSize: "1.5rem", lineHeight: "2rem"}}>Photography</div>

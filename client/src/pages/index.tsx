@@ -2,7 +2,7 @@ import React, { RefObject, useEffect, useImperativeHandle, useRef, useState } fr
 import {HomeNav} from '../components/home-nav';
 import { useRasterize } from '@/hooks/useRasterize';
 import { useSelector } from 'react-redux';
-import { getDomImage } from '@/state/slices/canvasSlice';
+import { getDomImage, getHovering } from '@/state/slices/canvasSlice';
 import { ChickenRipple } from '@/sketches/chickenRipple';
 
 
@@ -31,6 +31,7 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
   const [dummy, setDummy] = useState('');
   const stateHoldingRef = React.useRef<HTMLDivElement>(null);
   const serializeThisRef = React.useRef<HTMLDivElement>(null);
+  const isHovering = useSelector(getHovering);
 
   useRasterize({
     serializeThisRef: serializeThisRef,
@@ -50,12 +51,14 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
         ref={stateHoldingRef} 
         tw_classes={'text-transparent absolute inset-0 z-20'}
         title={title}
-        setTitle={setTitle}/>
+        setTitle={setTitle}
+        opaq={(isHovering) ? false : true}/>
       <HomeNav 
         ref={serializeThisRef} 
         tw_classes={'invisible absolute inset-0 z-10'}
         title={title}
-        setTitle={setDummy} />
+        setTitle={setDummy}
+        opaq={(isHovering) ? true : false} />
     </React.Fragment>
   )
 })

@@ -6,10 +6,10 @@ import spriteJSON from './assets/chickens/spritesheet.json'
 import allchickenlines from './assets/chickens/allchickenlines.png'
 import { useWindowSize } from "@/hooks/useWindowSize";
 import Image from "next/image";
-import { contrastFragment } from "./assets/shaders/contrastAccessibility";
+import { contrastFragment, sharpenFragment } from "./assets/shaders/contrastAccessibility";
 import { vertexUniversal } from "./assets/shaders/universalVertex";
 import { useDispatch, useSelector } from "react-redux";
-import { getDomImage, getMousePos, setCanvasSize } from "@/state/slices/canvasSlice";
+import { getDomImage, getHovering, getInvert, getMousePos, setCanvasSize } from "@/state/slices/canvasSlice";
 
 
 export const ChickenRipple = () => {
@@ -17,6 +17,8 @@ export const ChickenRipple = () => {
     const dispatch = useDispatch();
     const domImage = useSelector(getDomImage);
     const mousePos = useSelector(getMousePos);
+    const isHovering = useSelector(getHovering);
+    const isInvert = useSelector(getInvert);
     const [sketchReady, setReady] = useState(false);
     const [spriteBitMap, setSprites] = useState(null);
 
@@ -30,6 +32,7 @@ export const ChickenRipple = () => {
     const domImgRef = useRef<HTMLImageElement>(null);
 
     //canvas and buffers
+    const sharpenRef = useRef<HTMLCanvasElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const resultRef = useRef<HTMLCanvasElement>(null);
     const currBuffRef = useRef<HTMLCanvasElement>(null);
@@ -39,6 +42,7 @@ export const ChickenRipple = () => {
     const imgCanvasRef = useRef<HTMLCanvasElement>(null);
 
     //contexts
+    const ctxSharpenRef = useRef<any>(null);
     const ctxRef = useRef<any>(null);
     const ctxResultRef = useRef<any>(null);
     const currCTXRef = useRef<any>(null);
@@ -48,6 +52,7 @@ export const ChickenRipple = () => {
     const imgCanvasCTXRef = useRef<any>(null);
 
     //uniforms
+    const sharpenUniformRef = useRef(null);
     const resultUniformRef = useRef(null);
     const domRef = useRef(null);
     const doodleTilesRef = useRef(null);           
@@ -63,6 +68,7 @@ export const ChickenRipple = () => {
     const time2Ref = useRef(null);  
     const mouseRef = useRef(null);
     const mouse2Ref = useRef(null);
+    const hoverRef = useRef(null);
 
     // Interleaved data buffer (X,Y: vertex coordinates, U,V: texture coordinates)
     const verticesTexCoords = new Float32Array([
@@ -94,8 +100,8 @@ export const ChickenRipple = () => {
             });
             const img: any = portraitRef.current;
             const ctx = ctxRef.current;
-            canvas.width = img.width/2;
-            canvas.height = img.height/2;
+            canvas.width = img.width/1.75;
+            canvas.height = img.height/1.75;
             dispatch(setCanvasSize([canvas.width, canvas.height]));
 
             const result: any = resultRef.current;
@@ -113,6 +119,24 @@ export const ChickenRipple = () => {
             const rtx = ctxResultRef.current;
             result.width = canvas.width;
             result.height = canvas.height;
+
+            const sharpen: any = sharpenRef.current;
+            ctxSharpenRef.current = sharpen.getContext('webgl2', {
+                willReadFrequently: true,
+                alpha: true,
+                antialias: true,
+                depth: true,
+                stencil: true,
+                premultipliedAlpha: false,
+                preserveDrawingBuffer: true,
+                perPixelLighting: true,
+                version: 2
+            });
+            const stx = ctxSharpenRef.current;
+            sharpen.width = canvas.width;
+            sharpen.height = canvas.height;
+
+
             
             const sprites: any = spritesRef.current;
             const lines: any = linesRef.current;
@@ -161,6 +185,7 @@ export const ChickenRipple = () => {
            
             const program = compile(ctx, vertexUniversal, tileFragment);
             const resultProgram = compile(rtx, vertexUniversal, contrastFragment);
+            const sharpenProgram = compile(stx, vertexUniversal, sharpenFragment);
 
             // Create the buffer object
             const vertexTexCoordBuffer = ctx.createBuffer();
@@ -171,6 +196,11 @@ export const ChickenRipple = () => {
             rtx.bindBuffer(rtx.ARRAY_BUFFER, vertexTexCoordBufferRes);
             rtx.bufferData(rtx.ARRAY_BUFFER, verticesTexCoords, rtx.STATIC_DRAW);
 
+            const vertexTexCoordBufferSharp = stx.createBuffer();
+            stx.bindBuffer(stx.ARRAY_BUFFER, vertexTexCoordBufferSharp);
+            stx.bufferData(stx.ARRAY_BUFFER, verticesTexCoords, stx.STATIC_DRAW);
+
+
             // Use every 1st and 2nd float for position
             const position = ctx.getAttribLocation(program, 'aPosition');
             ctx.vertexAttribPointer(position, 2, ctx.FLOAT, false, FSIZE * 4, 0);
@@ -180,19 +210,27 @@ export const ChickenRipple = () => {
             rtx.vertexAttribPointer(positionRes, 2, rtx.FLOAT, false, FSIZE * 4, 0);
             rtx.enableVertexAttribArray(positionRes);
 
+            const positionSharp = stx.getAttribLocation(sharpenProgram, 'aPosition');
+            stx.vertexAttribPointer(positionSharp, 2, stx.FLOAT, false, FSIZE * 4, 0);
+            stx.enableVertexAttribArray(positionSharp);
+
             // Use every 3rd and 4th float for texCoord
             const texCoord = ctx.getAttribLocation(program, 'aTexCoord');
             ctx.vertexAttribPointer(texCoord, 2, ctx.FLOAT, false, FSIZE * 4, FSIZE * 2);
             ctx.enableVertexAttribArray(texCoord);
 
-            // Use every 3rd and 4th float for texCoord
             const texCoordRes = rtx.getAttribLocation(resultProgram, 'aTexCoord');
             rtx.vertexAttribPointer(texCoordRes, 2, rtx.FLOAT, false, FSIZE * 4, FSIZE * 2);
             rtx.enableVertexAttribArray(texCoordRes);
+
+            const texCoordSharp = stx.getAttribLocation(sharpenProgram, 'aTexCoord');
+            stx.vertexAttribPointer(texCoordSharp, 2, stx.FLOAT, false, FSIZE * 4, FSIZE * 2);
+            stx.enableVertexAttribArray(texCoordRes);
   
 
             const res = ctx.getUniformLocation(program, 'res');
             const res2 = rtx.getUniformLocation(resultProgram, 'res');
+            const res3 = stx.getUniformLocation(sharpenProgram, 'res');
             
             const pix = ctx.getUniformLocation(program, 'pix');
             const doodleX = ctx.getUniformLocation(program, 'doodleX');
@@ -210,6 +248,8 @@ export const ChickenRipple = () => {
             prevRef.current = ctx.getUniformLocation(program, 'prevBuff');
             resultUniformRef.current = rtx.getUniformLocation(resultProgram, 'uiBackground');
             domRef.current = rtx.getUniformLocation(resultProgram, 'uiForeground');
+            hoverRef.current = rtx.getUniformLocation(resultProgram, 'hover');
+            sharpenUniformRef.current = stx.getUniformLocation(resultProgram, 'uiBackground');
 
             timeRef.current = ctx.getUniformLocation(program, 'time');
             time2Ref.current = rtx.getUniformLocation(resultProgram, 'time');
@@ -219,16 +259,17 @@ export const ChickenRipple = () => {
             // Flip the image's y axis
             ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, 1);
             rtx.pixelStorei(rtx.UNPACK_FLIP_Y_WEBGL, 1);
+            stx.pixelStorei(rtx.UNPACK_FLIP_Y_WEBGL, 1);
 
             const texture00 = ctx.createTexture();
             addTexture(ctx, texture00, ctx.TEXTURE1, spritesRef.current, doodleTilesRef.current, 1)
 
             const texture000 = ctx.createTexture();
-            addTexture(ctx, texture000, ctx.TEXTURE2, portraitRef.current, imageTextureRef.current, 2)
-
+            addTexture(ctx, texture000, ctx.TEXTURE2, portraitRef.current, imageTextureRef.current, 2);
 
             ctx.uniform2f(res, canvas.width, canvas.height);
             rtx.uniform2f(res2, canvas.width, canvas.height);
+            stx.uniform2f(res3, canvas.width, canvas.height);
             ctx.uniform2f(pix, 1.0/canvas.width, 1.0/canvas.height);
             ctx.uniform1f(doodleX, 20.0);
             ctx.uniform1f(doodleY, 4.0);
@@ -239,10 +280,15 @@ export const ChickenRipple = () => {
             ctx.clearColor(0.0,0.0,0.0,0.0);
             ctx.viewport(0,0,canvas.width, canvas.height);
 
-            rtx.blendFunc(ctx.ONE,ctx.ONE_MINUS_SRC_ALPHA);
-            rtx.enable(ctx.BLEND);
+            rtx.blendFunc(rtx.ONE,rtx.ONE_MINUS_SRC_ALPHA);
+            rtx.enable(rtx.BLEND);
             rtx.clearColor(0.0,0.0,0.0,0.0);
             rtx.viewport(0,0,canvas.width, canvas.height);
+
+            stx.blendFunc(stx.ONE,stx.ONE_MINUS_SRC_ALPHA);
+            stx.enable(stx.BLEND);
+            stx.clearColor(0.0,0.0,0.0,0.0);
+            stx.viewport(0,0,canvas.width, canvas.height);
             loadChickens();
 
             setReady(true);
@@ -273,6 +319,7 @@ export const ChickenRipple = () => {
         const result: any = resultRef.current;
         const ctx = ctxRef.current;
         const rtx = ctxResultRef.current;
+        const stx = ctxSharpenRef.current;
         const chickensCTX = chickensCTXRef.current;
 
         if (spriteBitMap) {
@@ -298,12 +345,14 @@ export const ChickenRipple = () => {
         ctx.uniform1f(musicRef.current, 0.0);
         ctx.uniform1f(randomizeRef.current, 0.0);
         ctx.uniform1f(isPlayRef.current, 0.0);
-        ctx.uniform1f(invertRef.current, 0.0);
+        ctx.uniform1f(invertRef.current, (isInvert) ? 1.0 : 0.0);
         ctx.uniform1f(timeRef.current, now);
         rtx.uniform1f(time2Ref.current, now);
+        rtx.uniform1f(hoverRef.current, (isHovering) ? 1.0 : 0.0);
         if (mousePos) ctx.uniform2f(mouseRef.current, mousePos[0], mousePos[1]);
         if (mousePos) rtx.uniform2f(mouse2Ref.current, mousePos[0], mousePos[1]);
 
+        // quadtree + ripple effect
         const texture0 = ctx.createTexture();
         addTexture(ctx, texture0, ctx.TEXTURE0, chickensRef.current, chickRef.current, 0)
 
@@ -315,7 +364,8 @@ export const ChickenRipple = () => {
      
         ctx.clear(ctx.COLOR_BUFFER_BIT);   // Clear canvas
         ctx.drawArrays(ctx.TRIANGLE_STRIP, 0, n); // Draw the quad
-
+        
+        // adjust contrast for accessibility
         const textureRes = rtx.createTexture();
         addTexture(rtx, textureRes, rtx.TEXTURE0, canvas, resultUniformRef.current, 0);
 
@@ -324,7 +374,14 @@ export const ChickenRipple = () => {
 
         rtx.clear(rtx.COLOR_BUFFER_BIT);   // Clear canvas
         rtx.drawArrays(rtx.TRIANGLE_STRIP, 0, n); // Draw the quad
-  
+
+        // sharpen resolution
+        const textureSharp = stx.createTexture();
+        addTexture(stx, textureSharp, stx.TEXTURE0, result, sharpenUniformRef.current, 0);
+
+        stx.clear(stx.COLOR_BUFFER_BIT);   // Clear canvas
+        stx.drawArrays(stx.TRIANGLE_STRIP, 0, n); // Draw the quad
+
         if (Math.floor(now/1000) % 5 === 0) chickensCTX.clearRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -341,7 +398,8 @@ export const ChickenRipple = () => {
 
     return (
         <React.Fragment>
-            <canvas ref={resultRef} className="sabsolute inset-0" />
+            <canvas ref={sharpenRef} className="absolute inset-0" />
+            <canvas ref={resultRef} className="invisible" />
             <canvas ref={canvasRef} className="invisible"/>
             <canvas ref={currBuffRef} className="invisible" />
             <canvas ref={prevBuffRef} className="invisible" />

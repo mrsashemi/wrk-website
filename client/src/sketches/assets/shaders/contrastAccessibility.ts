@@ -8,6 +8,7 @@ export const contrastFragment: string = `
   uniform vec2 mouse;
 
   uniform float time;
+  uniform float hover;
 
   // our texture coming from p5
   uniform sampler2D uiBackground;
@@ -75,25 +76,89 @@ export const contrastFragment: string = `
   vec3 makeAccessible(vec3 bg, vec3 fg) {
     float bgl = W3Luminance(bg);
     float fgl = W3Luminance(fg);
-    float targetRatio = 4.5; //compliance level, 7.0 for AAA
+    float targetRatio = 7.0; //compliance level, 7.0 for AAA
     return shiftHSV(bg, fgl, targetRatio);
   }
   
+    
   void main() {
     vec2 uv = vTexCoord; 
     vec4 bg = texture2D(uiBackground, uv);
     vec4 fg = texture2D(uiForeground, uv);
-    float blank = fg.r + fg.g + fg.b;
+
+    float speed = 0.6;
+    float distance = 0.001;
+    vec3 luma = vec3(0.299, 0.587, 0.114);
+    float power = dot(bg.rgb, luma);
+    power = sin(3.1415927*2.0 * mod(power + time * speed, 1.0))*10.0;
+    vec4 warpedFg = texture2D(uiForeground, uv+vec2(0.0, power)*distance);
+
+    float blank;
+    
+    if (hover == 1.0) blank = warpedFg.r + warpedFg.g + warpedFg.b;
+    else blank = fg.r + fg.g + fg.b;
 
     vec4 dom;
-
     vec3 result = makeAccessible(bg.rgb, vec3(1.0));
 
     if (blank == 0.0) dom = vec4(result, 1.0);
+    else if (hover == 1.0) dom = warpedFg;
     else dom = fg;
 
 
+    gl_FragColor = dom;
+  }
+`
 
-    gl_FragColor = dom;//vec4(result, 1.0);
+
+export const sharpenFragment: string = `
+  #ifdef GL_ES
+  precision highp float;
+  #endif
+
+  varying vec2 vTexCoord;
+  uniform vec2 res;
+
+  // our texture coming from p5
+  uniform sampler2D uiBackground;
+
+  mat3 YUVFromRGB = mat3(
+    vec3(0.299,-0.14713, 0.615),
+    vec3(0.587,-0.28886,-0.51499),
+    vec3(0.114,0.436,-0.10001));
+ 
+  mat3 RGBFromYUV = mat3(
+    vec3(1, 1, 1),
+    vec3(0.0,-0.394,2.03211),
+    vec3(1.13983,-0.580,0.0));
+ 
+  float extractLuma(vec3 c) {
+    return c.r * 0.299 + c.g * 0.587 + c.b * 0.114;
+  }
+    
+  void main() {
+    vec2 uv = vTexCoord; 
+    vec4 bg = texture2D(uiBackground, uv);
+
+    vec3 yuv = YUVFromRGB*bg.rgb;
+    vec2 imgSize = vec2(res.x, res.y);
+    float accumY = 0.0; 
+
+    for(int i = -1; i <= 1; ++i) {
+      for(int j = -1; j <= 1; ++j) {
+        vec2 offset = vec2(i,j) / imgSize;
+        
+        float s = extractLuma(texture2D(uiBackground, uv + offset).rgb);
+        float notCentre = min(float(i*i + j*j),1.0);
+        accumY += s * (9.0 - notCentre*10.0);
+      }
+    }
+
+    accumY /= 9.0;
+    float gain = 0.9;
+    accumY = (accumY + yuv.x)*gain;
+    vec4 sharp = vec4(RGBFromYUV * vec3(accumY,yuv.y,yuv.z),1.0);
+
+    gl_FragColor = sharp;
   }
 `

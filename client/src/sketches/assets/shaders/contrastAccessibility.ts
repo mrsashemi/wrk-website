@@ -1,6 +1,6 @@
 export const contrastFragment: string = `
   #ifdef GL_ES
-  precision highp float;
+  precision mediump float;
   #endif
 
   varying vec2 vTexCoord;
@@ -35,7 +35,7 @@ export const contrastFragment: string = `
   
   float gammaCorrection(float colorChannel) {
     if (colorChannel <= 0.03928) return colorChannel / 1.055;
-    return pow((colorChannel + 0.055) / 1.055, 2.4);
+    else return pow((colorChannel + 0.055) / 1.055, 2.4);
   }
   
   float W3Luminance(vec3 rgb) {
@@ -76,8 +76,22 @@ export const contrastFragment: string = `
   vec3 makeAccessible(vec3 bg, vec3 fg) {
     float bgl = W3Luminance(bg);
     float fgl = W3Luminance(fg);
-    float targetRatio = 7.0; //compliance level, 7.0 for AAA
+    float targetRatio = 4.5; //compliance level, 7.0 for AAA
     return shiftHSV(bg, fgl, targetRatio);
+  }
+
+  mat3 YUVFromRGB = mat3(
+    vec3(0.299,-0.14713, 0.615),
+    vec3(0.587,-0.28886,-0.51499),
+    vec3(0.114,0.436,-0.10001));
+ 
+  mat3 RGBFromYUV = mat3(
+    vec3(1, 1, 1),
+    vec3(0.0,-0.394,2.03211),
+    vec3(1.13983,-0.580,0.0));
+ 
+  float extractLuma(vec3 c) {
+    return c.r * 0.299 + c.g * 0.587 + c.b * 0.114;
   }
   
     
@@ -86,20 +100,59 @@ export const contrastFragment: string = `
     vec4 bg = texture2D(uiBackground, uv);
     vec4 fg = texture2D(uiForeground, uv);
 
-    float speed = 0.6;
-    float distance = 0.001;
+    vec3 yuv = YUVFromRGB*fg.rgb;
+    vec2 imgSize = vec2(res.x, res.y);
+    float accumY = 0.0; 
+
+    for(int i = -1; i <= 1; ++i) {
+      for(int j = -1; j <= 1; ++j) {
+        vec2 offset = vec2(i,j) / imgSize;
+        
+        float s = extractLuma(texture2D(uiForeground, uv + offset).rgb);
+        float notCentre = min(float(i*i + j*j),1.0);
+        accumY += s * (9.0 - notCentre*10.0);
+      }
+    }
+
+    accumY /= 9.0;
+    float gain = 0.9;
+    accumY = (accumY + yuv.x)*gain;
+    fg = vec4(RGBFromYUV * vec3(accumY,yuv.y,yuv.z),1.0);
+    float mid = fg.r + fg.g + fg.b;
+
+    float speed;
+    float distance;
+
+    if (mid < 2.0 && mid > 1.0) {
+      speed = 0.6;
+      distance = 0.0;
+      fg.rgb = vec3(1.0);
+    } else {
+      speed = 0.0001;
+      distance = 0.001;
+    }
+    
+
+
     vec3 luma = vec3(0.299, 0.587, 0.114);
     float power = dot(bg.rgb, luma);
-    power = sin(3.1415927*2.0 * mod(power + time * speed, 1.0))*10.0;
+    power = sin(3.1415927*2.0 * mod(power + time * speed, 1.0))*20.0;
     vec4 warpedFg = texture2D(uiForeground, uv+vec2(0.0, power)*distance);
+    mid = warpedFg.r + warpedFg.g + warpedFg.b;
+
+    if (mid < 2.0 && mid > 1.0) {
+      warpedFg.rgb = vec3(1.0);
+    } 
 
     float blank;
     
-    if (hover == 1.0) blank = warpedFg.r + warpedFg.g + warpedFg.b;
+    if (hover == 1.0) blank = mid;
     else blank = fg.r + fg.g + fg.b;
 
     vec4 dom;
     vec3 result = makeAccessible(bg.rgb, vec3(1.0));
+    
+    warpedFg*=bg;
 
     if (blank == 0.0) dom = vec4(result, 1.0);
     else if (hover == 1.0) dom = warpedFg;
@@ -113,7 +166,7 @@ export const contrastFragment: string = `
 
 export const sharpenFragment: string = `
   #ifdef GL_ES
-  precision highp float;
+  precision mediump float;
   #endif
 
   varying vec2 vTexCoord;

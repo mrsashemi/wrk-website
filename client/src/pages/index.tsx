@@ -52,13 +52,13 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
         tw_classes={'text-transparent absolute inset-0 z-20'}
         title={title}
         setTitle={setTitle}
-        opaq={(isHovering) ? false : true}/>
+        opaq={false}/>
       <HomeNav 
         ref={serializeThisRef} 
         tw_classes={'invisible absolute inset-0 z-10'}
         title={title}
         setTitle={setDummy}
-        opaq={(isHovering) ? true : false} />
+        opaq={true} />
     </React.Fragment>
   )
 })

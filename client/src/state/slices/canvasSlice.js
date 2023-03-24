@@ -9,8 +9,8 @@ export const canvasSlice = createSlice({
         mousePos: null,
         canvasSize: null,
         hoveringElem: false,
-        invert: false
-
+        invert: false,
+        pressing: false
     }, 
     reducers: {
         setDomImage(state, action) {
@@ -28,7 +28,9 @@ export const canvasSlice = createSlice({
         setInvert(state, action) {
             state.invert = action.payload;
         },
-
+        setPressing(state, action) {
+            state.pressing = action.payload;
+        }
     }
 });
 
@@ -37,13 +39,15 @@ export const getMousePos = (state) => state.canvas.mousePos;
 export const getCanvasSize = (state) => state.canvas.canvasSize;
 export const getHovering = (state) => state.canvas.hoveringElem;
 export const getInvert = (state) => state.canvas.invert;
+export const getPressing = (state) => state.canvas.pressing;
 
 export const {
     setDomImage,
     setMousePos,
     setCanvasSize,
     setHovering,
-    setInvert
+    setInvert,
+    setPressing
 } = canvasSlice.actions;
 
 export default canvasSlice.reducer;

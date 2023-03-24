@@ -45,11 +45,11 @@ export const rasterizeDomNode = async (srcElement: HTMLElement) => {
 
     const img: HTMLImageElement = await createImgFromSVG(svgDataURI);
     const canvas: HTMLCanvasElement = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = width*1.5;
+    canvas.height = height*1.5;
 
     const context = canvas.getContext('2d');
-    context?.drawImage(img, 0, 0);
+    context?.drawImage(img, 0, 0, canvas.width, canvas.height);
     const png = canvas.toDataURL();
 
     return png;

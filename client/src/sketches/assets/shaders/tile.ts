@@ -1,6 +1,6 @@
 export const tileFragment: string = `
   #ifdef GL_ES
-  precision highp float;
+  precision mediump float;
   #endif
 
   // grab texcoords from vert shader
@@ -35,7 +35,7 @@ export const tileFragment: string = `
   #define iterations 4
 
   // the number of samples picked fter each quad division
-  #define varianceSamples 10
+  #define varianceSamples 5
 
   // threshold min, max given the mouse.x
   #define minVariance 0.0001
@@ -68,13 +68,13 @@ export const tileFragment: string = `
         avg += newSample;
 
         // estimate the color variation on the active quad by computing the variance, it is quickest to do so in one pass
-        var += pow(newSample, vec3(2.0));
+        var += newSample*newSample;
     }
     
 
     avg /= float(varianceSamples);
     var /= float(varianceSamples);
-    var -= pow(avg, vec3(2.0));
+    var -= avg*avg;
         
     return (var.x+var.y+var.z)/3.0;
   }
@@ -185,7 +185,7 @@ export const tileFragment: string = `
     vec3 r = texture2D(currBuff, uv - vec2(pix.x, 0.0)).rgb;
 
     // hugo elias water ripple: https://web.archive.org/web/20160418004149/http://freespace.virgin.net/hugo.elias/graphics/x_water.htm
-    // Incorporating some logic for the hugo elias algorith referencing this wave equation solver: https://www.shadertoy.com/view/4dK3Ww 
+    // Incorporating some logic for the hugo elias algorith referencing this wave equation solver, also based on hugo elias: https://www.shadertoy.com/view/4dK3Ww 
     //float amp = when_gt(0.05, fract(time));
     float amp = 0.05;
     vec3 chickenR = ((cC+hC+kC+nC)/2.0) - prevC;

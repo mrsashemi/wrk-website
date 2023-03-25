@@ -9,6 +9,7 @@ export const contrastFragment: string = `
 
   uniform float time;
   uniform float hover;
+  uniform float isPressing;
 
   // our texture coming from p5
   uniform sampler2D uiBackground;
@@ -122,42 +123,32 @@ export const contrastFragment: string = `
 
     float speed;
     float distance;
+    vec4 warpedFg;
 
-    if (mid < 2.0 && mid > 1.0) {
-      speed = 0.6;
-      distance = 0.0;
-      fg.rgb = vec3(1.0);
-    } else {
+    if (uv.y > 0.2 && uv.y < 0.8) {
       speed = 0.0001;
       distance = 0.001;
+      vec3 luma = vec3(0.299, 0.587, 0.114);
+      //float luma = W3Luminance(bg.rgb);
+      float power = dot(bg.rgb, vec3(luma));
+      power = sin(3.1415927*2.0 * mod(power + time * speed, 1.0))*20.0;
+      warpedFg = texture2D(uiForeground, uv+vec2(sin(power*0.5), power)*distance);
+      mid = warpedFg.r + warpedFg.g + warpedFg.b;
     }
-    
-
-
-    vec3 luma = vec3(0.299, 0.587, 0.114);
-    float power = dot(bg.rgb, luma);
-    power = sin(3.1415927*2.0 * mod(power + time * speed, 1.0))*20.0;
-    vec4 warpedFg = texture2D(uiForeground, uv+vec2(0.0, power)*distance);
-    mid = warpedFg.r + warpedFg.g + warpedFg.b;
-
-    if (mid < 2.0 && mid > 1.0) {
-      warpedFg.rgb = vec3(1.0);
-    } 
-
-    float blank;
-    
-    if (hover == 1.0) blank = mid;
-    else blank = fg.r + fg.g + fg.b;
+  
+    float blank = mid;
 
     vec4 dom;
     vec3 result = makeAccessible(bg.rgb, vec3(1.0));
-    
-    warpedFg*=bg;
+    float avg = result.r + result.g + result.b;
+
+    if (avg > 0.2 && isPressing == 1.0) warpedFg*=bg;
+    else if (isPressing == 1.0) warpedFg/=bg;
+    else warpedFg*=bg;
 
     if (blank == 0.0) dom = vec4(result, 1.0);
-    else if (hover == 1.0) dom = warpedFg;
+    else if (uv.y > 0.2 && uv.y < 0.8) dom = warpedFg;
     else dom = fg;
-
 
     gl_FragColor = dom;
   }

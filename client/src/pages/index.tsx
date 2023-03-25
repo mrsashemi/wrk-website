@@ -4,6 +4,7 @@ import { useRasterize } from '@/hooks/useRasterize';
 import { useSelector } from 'react-redux';
 import { getDomImage, getHovering } from '@/state/slices/canvasSlice';
 import { ChickenRipple } from '@/sketches/chickenRipple';
+import { useWindowSize } from '@/hooks/useWindowSize';
 
 
 export type RefHandler = {
@@ -14,10 +15,12 @@ export type RefHandler = {
 export default function Home() {
   const childRef = useRef<RefHandler>(null);
   const domImage = useSelector(getDomImage);
+  const windowSize = useWindowSize();
   
 
   return (
-    <div> 
+    <div className='w-screen h-screen m-0 p-0 overflow-hidden' style={{width: `calc(${windowSize[0]*0.01}px*100)`, height: `calc(${windowSize[1]*0.01}px*100)`}}> 
+      <meta content="width=device-width, initial-scale=1" name="viewport" />
       {/*<img src={`${domImage && domImage}`} className='invisible w-fit h-fit pointer-events-none absolute inset-0 z-30' id='dom-img' onMouseMove={(e) => findMousePos(e)}></img>*/}
       <ChickenRipple />
       <HomeNavShader ref={childRef}/>
@@ -27,7 +30,7 @@ export default function Home() {
 
 // Use refs to create two copies of the UI, one transparent and one hidden that will be sent to WEBGL during the rasterization step.
 export const HomeNavShader = React.forwardRef((props, ref) => {
-  const [title, setTitle] = useState('WZRDS');
+  const [title, setTitle] = useState('WIZARDS ROBBING KIDS');
   const [dummy, setDummy] = useState('');
   const stateHoldingRef = React.useRef<HTMLDivElement>(null);
   const serializeThisRef = React.useRef<HTMLDivElement>(null);

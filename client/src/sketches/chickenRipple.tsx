@@ -11,7 +11,6 @@ import { vertexUniversal } from "./assets/shaders/universalVertex";
 import { useDispatch, useSelector } from "react-redux";
 import { getDomImage, getHovering, getInvert, getMousePos, getPressing, setCanvasSize } from "@/state/slices/canvasSlice";
 import { addTexture, create2Dbuffer, createGLbuffer, getRandomColor, loadChickens, prepareShader, setUniform1f, setUniform2f, tint } from "./methods/methods";
-import { useLongPress } from "@/hooks/useLongpress";
 
 
 export const ChickenRipple = () => {
@@ -139,6 +138,7 @@ export const ChickenRipple = () => {
         setUniform1f(ctxRef.current, 'randomize', quadripples.current, 0.0);
         setUniform1f(ctxRef.current, 'isPlaying', quadripples.current, 0.0);
         setUniform1f(ctxRef.current, 'invert', quadripples.current, (isInvert) ? 1.0 : 0.0);
+        setUniform1f(ctxResultRef.current, 'isPressing', adjustContrast.current, (isPressing) ? 1.0 : 0.0);
         setUniform1f(ctxRef.current, 'time', quadripples.current, now);
         setUniform1f(ctxResultRef.current, 'time', adjustContrast.current, now);
         setUniform1f(ctxResultRef.current, 'hover', adjustContrast.current, (isHovering) ? 1.0 : 0.0);
@@ -175,7 +175,7 @@ export const ChickenRipple = () => {
 
     return (
         <React.Fragment>
-            <canvas ref={sharpenRef} className="absolute inset-0" />
+            <canvas ref={sharpenRef} className="absolute inset-0 w-full h-full overflow-hidden" />
             <canvas ref={resultRef} className="invisible" />
             <canvas ref={canvasRef} className="invisible"/>
             <canvas ref={currBuffRef} className="invisible" />

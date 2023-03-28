@@ -1,10 +1,9 @@
-import React, { RefObject, useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { tileFragment } from "./assets/shaders/tile";
 import portrait from './assets/images/hasibwide.JPG'
 import spritesheet from './assets/chickens/spritesheet.png'
 import spriteJSON from './assets/chickens/spritesheet.json'
 import allchickenlines from './assets/chickens/allchickenlines.png'
-import { useWindowSize } from "@/hooks/useWindowSize";
 import Image from "next/image";
 import { contrastFragment, sharpenFragment } from "./assets/shaders/contrastAccessibility";
 import { vertexUniversal } from "./assets/shaders/universalVertex";
@@ -15,7 +14,6 @@ import { addTexture, create2Dbuffer, createGLbuffer, getRandomColor, loadChicken
 
 export const ChickenRipple = () => {
     const isPressing = useSelector(getPressing);
-    const windowSizes = useWindowSize();
     const dispatch = useDispatch();
     const domImage = useSelector(getDomImage);
     const mousePos = useSelector(getMousePos);
@@ -47,7 +45,6 @@ export const ChickenRipple = () => {
     const quadripples = useRef<any>(null)
     const adjustContrast = useRef<any>(null)
     const sharpenResult = useRef<any>(null)
-
 
     //contexts
     const ctxSharpenRef = useRef<any>(null);
@@ -97,7 +94,7 @@ export const ChickenRipple = () => {
             addTexture(ctx, ctx.TEXTURE2, portraitRef.current, quadripples.current, 2, 'imageTexture');
 
             const tempSprites = await loadChickens(spritesheetRef.current, spriteJSON);
-            setSprites(tempSprites);
+            setSprites(tempSprites.lines);
             dispatch(setCanvasSize([w, h]));
             setReady(true);
         }
@@ -186,7 +183,7 @@ export const ChickenRipple = () => {
             <Image src={portrait}  alt="Portrait of Hasib" className="hidden" ref={portraitRef} priority/>
             <Image src={spritesheet} alt="all sprites" className="hidden" ref={spritesheetRef} priority unoptimized/>
             <Image src={allchickenlines} alt="line sprites" className="hidden" ref={linesRef} priority unoptimized/>
-            <img src={domImage} alt="rasterized DOM" className="hidden" width={windowSizes[0]} height={windowSizes[1]} ref={domImgRef} />
+            <img src={domImage} alt="rasterized DOM" className="hidden" ref={domImgRef} />
         </React.Fragment>
     )
 }

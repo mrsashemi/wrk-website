@@ -7,6 +7,7 @@ export function useWindowSize() {
         function updateSize() {
             setSize([window.innerWidth, window.innerHeight]);
         }
+        
         window.addEventListener('resize', updateSize);
         updateSize();
         return () => window.removeEventListener('resize', updateSize);

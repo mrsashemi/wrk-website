@@ -1,7 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-// create a slice to store information that will be passed to react-p5 canvas
-
 export const canvasSlice = createSlice({
     name: "canvas",
     initialState: {

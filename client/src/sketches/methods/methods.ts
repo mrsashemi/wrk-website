@@ -172,18 +172,66 @@ export const setUniform1f = (gl: WebGL2RenderingContext, location: string, progr
 
 
 export const loadChickens = async (spritesheet: any, spriteJSON: any) => {
-    let tempSprites: any = [];
+    let lineSprites: any = [];
+    let detailSprites: any = [];
+    let otherDetailSprites: any = [];
+    let bodySprites: any = [];
+
     let allsprites: any = spritesheet;
     let allspritesJSON: any = spriteJSON
     for (let i = 0; i < 2; i++) {
-        tempSprites.push(await createImageBitmap(
+        lineSprites.push(await createImageBitmap(
             allsprites, 
             allspritesJSON.frames[`chickenlines-${i}.png`]["frame"]["x"], 
             allspritesJSON.frames[`chickenlines-${i}.png`]["frame"]["y"], 
             allspritesJSON.frames[`chickenlines-${i}.png`]["frame"]["w"],
             allspritesJSON.frames[`chickenlines-${i}.png`]["frame"]["h"])
         )
+        detailSprites.push(await createImageBitmap(
+            allsprites, 
+            allspritesJSON.frames[`chickendetail-${i}.png`]["frame"]["x"], 
+            allspritesJSON.frames[`chickendetail-${i}.png`]["frame"]["y"], 
+            allspritesJSON.frames[`chickendetail-${i}.png`]["frame"]["w"],
+            allspritesJSON.frames[`chickendetail-${i}.png`]["frame"]["h"]
+        ))
+
+        otherDetailSprites.push(await createImageBitmap(
+            allsprites, 
+            allspritesJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["x"], 
+            allspritesJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["y"], 
+            allspritesJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["w"],
+            allspritesJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["h"]
+        ))
+
+        bodySprites.push(await createImageBitmap(
+            allsprites, 
+            allspritesJSON.frames[`chickenbody-${i}.png`]["frame"]["x"], 
+            allspritesJSON.frames[`chickenbody-${i}.png`]["frame"]["y"], 
+            allspritesJSON.frames[`chickenbody-${i}.png`]["frame"]["w"],
+            allspritesJSON.frames[`chickenbody-${i}.png`]["frame"]["h"]
+        ))
     }
 
-    return tempSprites;
+    return {lines: lineSprites, detail: detailSprites, otherdetail: otherDetailSprites, body: bodySprites};
+}
+
+export function colorDistance(color1: any, color2: any) {
+    const dr = color2[0] - color1[0];
+    const dg = color2[1] - color1[1];
+    const db = color2[2] - color1[2];
+    return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+export function drawChicken(x: number, y: number, w: number, h: number, ctx: any, col: any, col2: any, sprites: any, spriteDetails: any, spriteOtherDetails: any, spriteBody: any) {
+    let chkn = Math.floor(Math.random()*2);
+
+    //lines and tinted are the same
+    let tinted = tint(sprites[chkn], "#000000");
+    ctx.drawImage(tinted, x, y, w, h);
+    tinted = tint(spriteDetails[chkn], col2);
+    ctx.drawImage(tinted, x, y, w, h);
+    tinted = tint(spriteOtherDetails[chkn], col2);
+    ctx.drawImage(tinted, x, y, w, h);
+    tinted = tint(spriteBody[chkn], col);
+    ctx.drawImage(tinted, x, y, w, h);
 }

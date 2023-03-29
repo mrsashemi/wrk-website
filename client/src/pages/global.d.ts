@@ -5,13 +5,8 @@ declare module '*.vs.glsl';
 declare module '*.jpg';
 declare module '*.JPG';
 
-declare module '*.vert' {
-    const content: string;
-    export default content;
-};
 
-declare module '*.frag' {
-    const content: string;
-    export default content;
-};
-
+declare module "roughjs/bundled/rough.cjs.js" {
+    import rough from "roughjs/bin/rough";
+    export default rough;
+}

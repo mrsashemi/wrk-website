@@ -121,8 +121,8 @@ export const ChickenRipple = () => {
     
             //lines and tinted are the same
             let bitmap: any = spriteBitMap;
-            const tinted = tint(bitmap[chkn], randArr[2]);
-            chickensCTX.drawImage(tinted, randX, randY, 50, 50);
+            const tinted = tint(bitmap[chkn], randArr[0]);
+            chickensCTX.drawImage(tinted, randX, randY, 100, 100);
             if (mousePos) chickensCTX.drawImage(tinted, mousePos[0], mousePos[1], 20, 20);
         }
 
@@ -172,7 +172,7 @@ export const ChickenRipple = () => {
 
     return (
         <React.Fragment>
-            <canvas ref={sharpenRef} className="absolute inset-0 w-full h-full overflow-hidden" />
+            <canvas ref={sharpenRef} className="absolute inset-0 w-full h-full overflow-hidden z-10" />
             <canvas ref={resultRef} className="invisible" />
             <canvas ref={canvasRef} className="invisible"/>
             <canvas ref={currBuffRef} className="invisible" />

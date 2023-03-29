@@ -1,12 +1,13 @@
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react"
-import portrait from './assets/images/hasibwide.JPG'
+import portrait from './assets/images/hasibwide-nobg.png'
 import spritesheet from './assets/chickens/spritesheet.png'
 import spriteJSON from './assets/chickens/spritesheet.json'
-import { colorDistance, create2Dbuffer, distanceRange, drawChicken, getRandomColor, loadChickens, mapRange } from "./methods/methods";
+import { colorDistance, create2Dbuffer, distanceRange, drawChicken, drawRoughCircle, drawRoughCube, drawRoughPyramid, drawRoughStar, drawRoughtHeart, getRandomColor, loadChickens, mapRange, tint } from "./methods/methods";
 import { setCanvasSize } from "@/state/slices/canvasSlice";
 import { useDispatch } from "react-redux";
 import { Point, QuadTree, Rect } from "./methods/quadtree";
+import rough from "roughjs/bundled/rough.cjs.js";
 
 export const Chickens1000 = () => {
     //state
@@ -29,8 +30,10 @@ export const Chickens1000 = () => {
     const img = useRef<HTMLImageElement>(null);
     const sprites = useRef<HTMLImageElement>(null);
 
-    //data structure
+    //data 
     const qtree = useRef<QuadTree>();
+    const pixels = useRef<DataView>();
+    const curves = useRef<any>(null);
 
     //canvas and buffers
     const c = useRef<HTMLCanvasElement>(null);
@@ -60,40 +63,47 @@ export const Chickens1000 = () => {
     const ctxImg = useRef<any>(null);
     const ctxBuffers = useRef<any>(null);
 
+    //rough
+    const rc0 = useRef<any>(null);
+    const rc1 = useRef<any>(null);
+    const rc2 = useRef<any>(null);
+    const rc3 = useRef<any>(null);
+    const rc4 = useRef<any>(null);
+    const rc5 = useRef<any>(null);
+    const rc6 = useRef<any>(null);
+    const rc7 = useRef<any>(null);
+    const rc8 = useRef<any>(null);
+    const rcBuffers = useRef<any>(null);
+
     //initialize sketch
     useEffect(() => {
         const initSketch = async () => {
             const i: any = img.current;
-            let w = i.width/3;
-            let h = i.height/3;
-
-            ctx.current = create2Dbuffer(ctx.current, c.current, w, h, false, null);
-            ctx0.current = create2Dbuffer(ctx0.current, c0.current, w, h, false, null);
-            ctx1.current = create2Dbuffer(ctx1.current, c1.current, w, h, false, null);
-            ctx2.current = create2Dbuffer(ctx2.current, c2.current, w, h, false, null);
-            ctx3.current = create2Dbuffer(ctx3.current, c3.current, w, h, false, null);
-            ctx4.current = create2Dbuffer(ctx4.current, c4.current, w, h, false, null);
-            ctx5.current = create2Dbuffer(ctx5.current, c5.current, w, h, false, null);
-            ctx6.current = create2Dbuffer(ctx6.current, c6.current, w, h, false, null);
-            ctx7.current = create2Dbuffer(ctx7.current, c7.current, w, h, false, null);
-            ctx8.current = create2Dbuffer(ctx8.current, c8.current, w, h, false, null);
-            ctxImg.current = create2Dbuffer(ctxImg.current, cImg.current, w, h, true, i);
+            let w = Math.floor(i.width/2);
+            let h = Math.floor(i.height/2);
 
             cBuffers.current = [c0, c1, c2, c3, c4, c5, c6, c7, c8];
-            ctxBuffers.current = [
-                ctx0, 
-                ctx1, 
-                ctx2, 
-                ctx3, 
-                ctx4, 
-                ctx5, 
-                ctx6, 
-                ctx7,
-                ctx8
-            ];
+            ctxBuffers.current = [ctx0, ctx1, ctx2, ctx3, ctx4, ctx5, ctx6, ctx7, ctx8];
+            rcBuffers.current = [rc0, rc1, rc2, rc3, rc4, rc5, rc6, rc7, rc8];
 
+            for (let i = 0; i < 9; i++) {
+                let cx = ctxBuffers.current[i];
+                let cn = cBuffers.current[i];
+                let rn = rcBuffers.current[i];
+                cx.current = create2Dbuffer(cx.current, cn.current, w, h, false, null);
+                rn.current = rough.canvas((cn as any).current);
+            }
+
+            ctx.current = create2Dbuffer(ctx.current, c.current, w, h, false, null);
+            ctxImg.current = create2Dbuffer(ctxImg.current, cImg.current, w, h, true, i);
+
+            const colorData = ctxImg.current.getImageData(0, 0, cImg.current?.width, cImg.current?.height).data;
+            pixels.current = colorData;
+       
             const boundry = new Rect(w/2, h/2, w/2, h/2);
             qtree.current = new QuadTree(boundry, 4);
+
+            curves.current = [];
 
             dispatch(setCanvasSize([w, h]));
             const tempSprites = await loadChickens(sprites.current, spriteJSON);
@@ -102,6 +112,8 @@ export const Chickens1000 = () => {
             setOtherDetail(tempSprites.otherdetail);
             setBody(tempSprites.body);
             setReady(true);
+
+            //ctx.current.drawImage(cImg.current, 0, 0, w, h);
         }
         
         initSketch();
@@ -111,57 +123,63 @@ export const Chickens1000 = () => {
     function sketch(now: any) {
         sketchId.current = requestAnimationFrame(sketch as any);
         const cx: any = ctx.current
-
+        const cn: any = c.current;
         let distanceRange = 130;
         let thinMin = 350;
         let thinMax = 310;
 
         for (let i = 0; i < 9; i++) {
-            let minSize = (i > 6) ? 45 : thinMin;
-            let maxSize = (i > 6) ? 70 : thinMax;
-
             drawLayer(
                 brightnessLimits[i + 1], 
                 brightnessLimits[i], 
                 distanceRange, 
-                minSize, 
-                maxSize, 
+                thinMin, 
+                thinMax, 
                 ctxBuffers.current[i].current,
+                rcBuffers.current[i].current,
                 i
             );
 
-            thinMax -= 30;
-            thinMin -= 30;
+            thinMax -= 40;
+            thinMin -= 40;
             if (i === 2 || i === 5) distanceRange += 10;
         }
 
         for (let i = 0; i < 9; i++) {
-            cx.drawImage((cBuffers as any).current[i].current, 0, 0);
+            cx.drawImage((cBuffers as any).current[i].current, 0, 0, cn.width, cn.height);
         } 
     }
 
-    function drawLayer(lowerLimit: number, upperLimit: number, distance: number, minSize: number, maxSize: number, ctx: any, num: number) {
+    function drawLayer(lowerLimit: number, upperLimit: number, distance: number, minSize: number, maxSize: number, ctx: any, rc: any, num: number) {
         const cnvs: any = c.current;
         const w: number = cnvs.width;
         const h: number = cnvs.height;
-        let randX = Math.floor(Math.random()*w);
-        let randY = Math.floor(Math.random()*h);
+        let randX = Math.floor(Math.random()*w/2 + w/4);
+        let randY = Math.floor(Math.random()*h + h/6);
         let prevX = randX;
         let prevY = randY;
-        let prevArr: any = getRandomColor(prevX, prevY, sketchReady, ctxImg.current);
-        let loopamount = 1000;
+        let prevArr: any = getRandomColor(prevX, prevY, w, pixels.current);
+        let effects = ["circles", "lines", "chickens", "cubes", "pyramids", "stars", "hearts"];
+        let index = Math.floor(Math.random()*12);
+        let generate;
+
+        if (index > 6 && index < 10) generate = "chickens"
+        else if (index > 10) generate = "lines";
+        else generate = effects[index]
     
-        for (let i = 0; i < loopamount; i++) {
-            let randX = Math.floor(Math.random()*w);
-            let randY = Math.floor(Math.random()*h);
-            let randArr: any = getRandomColor(prevX, prevY, sketchReady, ctxImg.current);
-            let colorDist = colorDistance(randArr[0].data, prevArr[0].data);
+    
+        for (let i = 0; i < 1000; i++) {
+            let randX = Math.floor(Math.random()*w/2 + w/4);
+            let randY = Math.floor(Math.random()*h + h/6);
+            let randArr: any = getRandomColor(randX, randY, w, pixels.current);
+            let colorDist = colorDistance(randArr[0], prevArr[0]);
             const colorThreshold = 25;
             let thinningScale = 8;
 
             if (colorDist < colorThreshold) {
                 let size = mapRange(randArr[1], 0, 255, minSize, maxSize);
                 size = size/8;
+
                 let dist = distanceRange(randX, randY, prevX, prevY)
 
                 if (((randArr[1] < upperLimit && randArr[1] > lowerLimit) && (prevArr[1] < upperLimit && prevArr[1] > lowerLimit))) {
@@ -169,22 +187,20 @@ export const Chickens1000 = () => {
                         const quadtree = qtree.current;
                         let thinAmount = size/thinningScale;
                         let range = new Rect(randX, randY, thinAmount, thinAmount);
-                        let points = (quadtree as QuadTree).queryWithoutZ(range, null);
+                        let points = (quadtree as QuadTree).query(range, null);
+
+
                         if (!(points as any).length) {
                             let m = new Point(randX, randY, "empty");
-                            (quadtree as QuadTree).insert(m);
+                        
+                            if (generate === "chickens") drawChicken(randX, randY, size, size, ctx, randArr[0], prevArr[0], spriteLines, spriteDetail, spriteOtherDetail, spriteBody);
+                            else if (generate === "lines") curves.current.push([randX, randY]);
+                            else if (generate === "circles") drawRoughCircle(randX, randY, size, rc, randArr[0], prevArr[0], num);
+                            else if (generate === "cubes") drawRoughCube(randX, randY, size, rc, randArr[0], prevArr[0], num);
+                            else if (generate === "pyramids") drawRoughPyramid(randX, randY, size, rc, randArr[0], prevArr[0], num);
+                            else if (generate === "stars") drawRoughStar(randX, randY, size, 10, 4, rc, randArr[0], num+2);
+                            else if (generate === "heart") drawRoughtHeart(randX, randY, size/3, rc, randArr[0], num+2);
 
-                            
-                            drawChicken(randX, randY, size, size, ctx, randArr[2], prevArr[2], spriteLines, spriteDetail, spriteOtherDetail, spriteBody);
-    
-                            // if (generate === "circles") drawRoughCircle(randX, randY, size, rc, f1, f2, f3, randArr[2], prevArr[2], num+2); 
-                            // else if (generate === "lines")  curves.push([randX, randY]);
-                            // else if (generate === "chickens") drawChicken(randX, randY, size, size, ctx, randArr[2], prevArr[2], num+2);
-                            // else if (generate === "cubes") drawRoughCube(randX, randY, size, rc, f1, f2, f3, randArr[2], prevArr[2], num+2);
-                            // else if (generate === "pyramids") drawRoughPyramid(randX, randY, size, rc, f1, f2, f3, randArr[2], prevArr[2], num+2);
-                            // else if (generate === "stars") drawRoughStar(randX, randY, size, 20, 3, rc, f1, randArr[2], num+2);
-                            // else if (generate === "hearts") drawRoughtHeart(randX, randY, size/3, rc, f1, randArr[2], num+2);
-    
                             prevX = randX;
                             prevY = randY;
                             prevArr = randArr;
@@ -192,6 +208,14 @@ export const Chickens1000 = () => {
                     }
                 }
             }
+        }
+
+        if (curves.current.length) {
+            rc.curve(curves.current, {
+                stroke: `rgb(${prevArr[0][0]}, ${prevArr[0][1]}, ${prevArr[0][2]})`, strokeWidth: 1, roughness: Math.random()*(num+2)+1
+            });
+    
+            curves.current.length = 0;
         }
     
     }
@@ -207,7 +231,7 @@ export const Chickens1000 = () => {
 
     return (
         <React.Fragment>
-            <canvas ref={c} className="absolute inset-0 w-full h-full overflow-hidden bg-black" />
+            <canvas ref={c} className="absolute inset-0 w-full h-full overflow-hidden z-20 bg-black" />
             <canvas ref={c0} className="invisible" />
             <canvas ref={c1} className="invisible" />
             <canvas ref={c2} className="invisible" />

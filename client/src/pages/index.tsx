@@ -23,8 +23,8 @@ export default function Home() {
     <div className='w-screen h-screen m-0 p-0 overflow-hidden' style={{width: `calc(${windowSize[0]*0.01}px*100)`, height: `calc(${windowSize[1]*0.01}px*100)`}}> 
       <meta content="width=device-width, initial-scale=1" name="viewport" />
       {/*<img src={`${domImage && domImage}`} className='invisible w-fit h-fit pointer-events-none absolute inset-0 z-30' id='dom-img' onMouseMove={(e) => findMousePos(e)}></img>*/}
-      {/* {<ChickenRipple />} */}
       <Chickens1000 />
+      {/* {<ChickenRipple />} */}
       <HomeNavShader ref={childRef}/>
     </div>
   )
@@ -54,13 +54,13 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
     <React.Fragment>
       <HomeNav 
         ref={stateHoldingRef} 
-        tw_classes={'text-transparent absolute inset-0 z-20'}
+        tw_classes={'text-transparent absolute inset-0 z-40'}
         title={title}
         setTitle={setTitle}
         opaq={false}/>
       <HomeNav 
         ref={serializeThisRef} 
-        tw_classes={'invisible absolute inset-0 z-10'}
+        tw_classes={'invisible absolute inset-0 z-30'}
         title={title}
         setTitle={setDummy}
         opaq={true} />

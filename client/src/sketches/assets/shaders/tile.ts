@@ -174,10 +174,10 @@ export const tileFragment: string = `
     vec3 k = texture2D(doodleTiles, center + vec2(pix.x, 0.0)*0.1).rgb;
     vec3 n = texture2D(doodleTiles, center - vec2(pix.x, 0.0)*0.1).rgb;
 
-    vec3 cC = texture2D(chick, uv + vec2(0.0, pix.y)).rgb;
-    vec3 hC = texture2D(chick, uv - vec2(0.0, pix.y)).rgb;
-    vec3 kC = texture2D(chick, uv + vec2(pix.x, 0.0)).rgb;
-    vec3 nC = texture2D(chick, uv - vec2(pix.x, 0.0)).rgb;
+    // vec3 cC = texture2D(chick, uv + vec2(0.0, pix.y)).rgb;
+    // vec3 hC = texture2D(chick, uv - vec2(0.0, pix.y)).rgb;
+    // vec3 kC = texture2D(chick, uv + vec2(pix.x, 0.0)).rgb;
+    // vec3 nC = texture2D(chick, uv - vec2(pix.x, 0.0)).rgb;
 
     vec3 u = texture2D(currBuff, uv + vec2(0.0, pix.y)).rgb;
     vec3 l = texture2D(currBuff, uv - vec2(0.0, pix.y)).rgb;
@@ -188,8 +188,8 @@ export const tileFragment: string = `
     // Incorporating some logic for the hugo elias algorith referencing this wave equation solver, also based on hugo elias: https://www.shadertoy.com/view/4dK3Ww 
     //float amp = when_gt(0.05, fract(time));
     float amp = 0.05;
-    vec3 chickenR = ((cC+hC+kC+nC)/2.0) - prevC;
-    chickenR *= damping;
+    // vec3 chickenR = ((cC+hC+kC+nC)/2.0) - prevC;
+    // chickenR *= damping;
     vec3 chicken = -amp*vec3(smoothstep(2.5, 0.5, length(uv - center)));
     chicken += (quadTileSize*(c+h+k+n))-2.0*prevC-1.0; 
     chicken *= damping;
@@ -202,7 +202,7 @@ export const tileFragment: string = `
     next = next*0.5 + 0.5;
     next *= 1.0 - chicken; 
     vec3 rippleR = nextR * damping;                  
-    nextR *= 1.5 - chickenR*1.5;
+    //nextR *= 1.5 - chickenR*1.5;
     vec3 blotchR = nextR - chicks.rgb * damping;
 
     //reduce intensity of darker colors
@@ -210,15 +210,16 @@ export const tileFragment: string = `
     vec3 mixedColor = mix(blotchR, rippleR, 0.98);
   
     // mixing and masking effects
-    next+=(next*chicks.rgb)*when_gt(tileColor.r + tileColor.g + tileColor.b, 0.0);
-    color+=next*when_gt(tileColor.r + tileColor.g + tileColor.b, 0.0);
-    next+=(-next*chicks.rgb)*when_eq(tileColor.r + tileColor.g + tileColor.b, 0.0);
-    color+=(next*color-color)*when_eq(tileColor.r + tileColor.g + tileColor.b, 0.0);
+    float tileCheck = tileColor.r + tileColor.g + tileColor.b;
+    float chickCheck = chicks.r + chicks.g + chicks.b;
+    
+    color+=next*when_gt(tileCheck, 0.0);
+    color+=(next*color-color)*when_eq(tileCheck, 0.0);
 
     vec3 mixedColor2 = mix(color, rippleR, 0.89);
     vec3 finalColor = mixedColor2;
-    mixedColor.r+=(mixedColor2.r-mixedColor.r)*when_neq(chicks.r + chicks.g + chicks.b, 0.0);
-    finalColor+=(mixedColor-finalColor)*when_neq(chicks.r + chicks.g + chicks.b, 0.0);
+    mixedColor.r+=(mixedColor2.r-mixedColor.r)*when_neq(chickCheck, 0.0);
+    finalColor+=(mixedColor-finalColor)*when_neq(chickCheck, 0.0);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }

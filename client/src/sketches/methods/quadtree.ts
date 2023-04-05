@@ -3,11 +3,13 @@ export class Point {
     x: number;
     y: number;
     z: number | string;
+    layerNum: number;
 
-    constructor(x: number, y: number, z: number | string) {
+    constructor(x: number, y: number, z: number | string, layerNum: number) {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.layerNum = layerNum;
     }
 }
 
@@ -93,36 +95,35 @@ export class QuadTree {
         }
     }
 
-    // show() {
-    //     stroke(0);
-    //     strokeWeight(10);
-    //     noFill();
-    //     rectMode(CENTER);
-    //     rect(this.boundry.x, this.boundry.y, this.boundry.w*2, this.boundry.h*2);
-    //     if (this.divided) {
-    //         this.northeast.show()
-    //         this.northwest.show()
-    //         this.southeast.show()
-    //         this.southwest.show()
-    //     }
-    // }
+    show(this: any, rc: any) {
+        rc.rectangle(this.boundry.x, this.boundry.y, this.boundry.w*2, this.boundry.h*2, {
+            fill: "rgba(0, 0, 0, 0)",
+            stroke: "rgb(255, 255, 255)"
+        });
+        if (this.divided) {
+            this.northeast.show(rc)
+            this.northwest.show(rc)
+            this.southeast.show(rc)
+            this.southwest.show(rc)
+        }
+    }
 
-    query(this: any, range: Rect, found: Point[] | null) {
+    query(this: any, num: number, range: Rect, found: Point[] | null) {
         if (!found) found = [];
         if (!this.boundry.intersects(range)) {
             return;
         } else {
             for (let p of this.points) {
-                if (range.contains(p)) {
+                if (range.contains(p) && p.layerNum === num) {
                     found.push(p);
                 }
             }
 
             if (this.divided) {
-                this.northwest.query(range, found);
-                this.northeast.query(range, found);
-                this.southwest.query(range, found);
-                this.southeast.query(range, found);
+                this.northwest.query(num, range, found);
+                this.northeast.query(num, range, found);
+                this.southwest.query(num, range, found);
+                this.southeast.query(num, range, found);
             }
         }
         return found;

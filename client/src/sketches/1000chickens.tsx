@@ -1,9 +1,11 @@
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react"
 import portrait from './assets/images/hasibwide-nobg.png'
+import edges from './assets/images/hasibwide-edges.png'
 import spritesheet from './assets/chickens/spritesheet.png'
 import spriteJSON from './assets/chickens/spritesheet.json'
-import { colorDistance, create2Dbuffer, distanceRange, drawChicken, drawRoughCircle, drawRoughCube, drawRoughPyramid, drawRoughStar, drawRoughtHeart, getRandomColor, loadChickens, mapRange, tint } from "./methods/methods";
+import { colorDistance, distanceRange, drawChicken, drawRoughCircle, drawRoughCube, drawRoughPyramid, drawRoughStar, drawRoughtHeart, getRandomColor, loadChickens, mapRange } from "./methods/effects";
+import { create2Dbuffer } from "./methods/createbuffer"
 import { setCanvasSize } from "@/state/slices/canvasSlice";
 import { useDispatch } from "react-redux";
 import { Point, QuadTree, Rect } from "./methods/quadtree";
@@ -12,10 +14,7 @@ import rough from "roughjs/bundled/rough.cjs.js";
 export const Chickens1000 = () => {
     //state
     const [sketchReady, setReady] = useState(false);
-    const [spriteLines, setLines] = useState(null);
-    const [spriteDetail, setDetail] = useState(null);
-    const [spriteOtherDetail, setOtherDetail] = useState(null);
-    const [spriteBody, setBody] = useState(null);
+    const [allSprites, setAllSprites] = useState(null);
 
     //constants
     const brightnessLimits = [255, 221, 187, 155, 123, 94, 66, 40, 14, 0];
@@ -28,11 +27,13 @@ export const Chickens1000 = () => {
 
     //images
     const img = useRef<HTMLImageElement>(null);
+    const edge = useRef<HTMLImageElement>(null);
     const sprites = useRef<HTMLImageElement>(null);
 
     //data 
     const qtree = useRef<QuadTree>();
     const pixels = useRef<DataView>();
+    const edgePixels = useRef<DataView>();
     const curves = useRef<any>(null);
 
     //canvas and buffers
@@ -47,6 +48,7 @@ export const Chickens1000 = () => {
     const c7 = useRef<HTMLCanvasElement>(null);
     const c8 = useRef<HTMLCanvasElement>(null);
     const cImg = useRef<HTMLCanvasElement>(null);
+    const cEdge = useRef<HTMLCanvasElement>(null);
     const cBuffers = useRef<any>(null);
 
     //contexts
@@ -61,6 +63,7 @@ export const Chickens1000 = () => {
     const ctx7 = useRef<any>(null);
     const ctx8 = useRef<any>(null);
     const ctxImg = useRef<any>(null);
+    const ctxEdge = useRef<any>(null);
     const ctxBuffers = useRef<any>(null);
 
     //rough
@@ -79,8 +82,8 @@ export const Chickens1000 = () => {
     useEffect(() => {
         const initSketch = async () => {
             const i: any = img.current;
-            let w = Math.floor(i.width/2);
-            let h = Math.floor(i.height/2);
+            let w = Math.floor(i.width);
+            let h = Math.floor(i.height);
 
             cBuffers.current = [c0, c1, c2, c3, c4, c5, c6, c7, c8];
             ctxBuffers.current = [ctx0, ctx1, ctx2, ctx3, ctx4, ctx5, ctx6, ctx7, ctx8];
@@ -96,24 +99,22 @@ export const Chickens1000 = () => {
 
             ctx.current = create2Dbuffer(ctx.current, c.current, w, h, false, null);
             ctxImg.current = create2Dbuffer(ctxImg.current, cImg.current, w, h, true, i);
+            ctxEdge.current = create2Dbuffer(ctxEdge.current, cEdge.current, w, h, true, edge.current);
 
-            const colorData = ctxImg.current.getImageData(0, 0, cImg.current?.width, cImg.current?.height).data;
+            const colorData = ctxImg.current.getImageData(0, 0, w, h).data;
             pixels.current = colorData;
+
+            const edgeData = ctxEdge.current.getImageData(0, 0, w, h).data;
+            edgePixels.current = edgeData;
        
             const boundry = new Rect(w/2, h/2, w/2, h/2);
             qtree.current = new QuadTree(boundry, 4);
 
             curves.current = [];
-
             dispatch(setCanvasSize([w, h]));
             const tempSprites = await loadChickens(sprites.current, spriteJSON);
-            setLines(tempSprites.lines);
-            setDetail(tempSprites.detail);
-            setOtherDetail(tempSprites.otherdetail);
-            setBody(tempSprites.body);
+            setAllSprites(tempSprites as any);
             setReady(true);
-
-            //ctx.current.drawImage(cImg.current, 0, 0, w, h);
         }
         
         initSketch();
@@ -124,7 +125,7 @@ export const Chickens1000 = () => {
         sketchId.current = requestAnimationFrame(sketch as any);
         const cx: any = ctx.current
         const cn: any = c.current;
-        let distanceRange = 130;
+        let distance = 200;
         let thinMin = 350;
         let thinMax = 310;
 
@@ -132,7 +133,7 @@ export const Chickens1000 = () => {
             drawLayer(
                 brightnessLimits[i + 1], 
                 brightnessLimits[i], 
-                distanceRange, 
+                distance, 
                 thinMin, 
                 thinMax, 
                 ctxBuffers.current[i].current,
@@ -140,11 +141,10 @@ export const Chickens1000 = () => {
                 i
             );
 
-            thinMax -= 40;
-            thinMin -= 40;
-            if (i === 2 || i === 5) distanceRange += 10;
+            thinMax -= 30;
+            thinMin -= 30;
         }
-
+     
         for (let i = 0; i < 9; i++) {
             cx.drawImage((cBuffers as any).current[i].current, 0, 0, cn.width, cn.height);
         } 
@@ -154,52 +154,59 @@ export const Chickens1000 = () => {
         const cnvs: any = c.current;
         const w: number = cnvs.width;
         const h: number = cnvs.height;
-        let randX = Math.floor(Math.random()*w/2 + w/4);
+        let randX = Math.floor(Math.random()*w/2 + w/4); //Hasib
         let randY = Math.floor(Math.random()*h + h/6);
+        // let randX = Math.floor(Math.random()*w/1.5 + w/7); //Adeeb
+        // let randY = Math.floor(Math.random()*h + h/7);
         let prevX = randX;
         let prevY = randY;
         let prevArr: any = getRandomColor(prevX, prevY, w, pixels.current);
+        let colorDist = 0;
+        let thinningScale = 2;
+        if (num < 5) distance = 300;
+
         let effects = ["circles", "lines", "chickens", "cubes", "pyramids", "stars", "hearts"];
-        let index = Math.floor(Math.random()*12);
+        let index = Math.floor(Math.random()*20);
         let generate;
 
-        if (index > 6 && index < 10) generate = "chickens"
-        else if (index > 10) generate = "lines";
-        else generate = effects[index]
-    
-    
-        for (let i = 0; i < 1000; i++) {
-            let randX = Math.floor(Math.random()*w/2 + w/4);
+        if (index > 6 && index < 16) generate = "chickens"
+        else if (index > 15) generate = "lines"
+        else if (num > 6) generate = "chickens"
+        else generate = effects[index];
+
+        for (let i = 0; i < 3000; i++) {
+            let randX = Math.floor(Math.random()*w/2 + w/4); //Hasib
             let randY = Math.floor(Math.random()*h + h/6);
+            // let randX = Math.floor(Math.random()*w/1.5 + w/7); //Adeeb
+            // let randY = Math.floor(Math.random()*h + h/7);
             let randArr: any = getRandomColor(randX, randY, w, pixels.current);
-            let colorDist = colorDistance(randArr[0], prevArr[0]);
-            const colorThreshold = 25;
-            let thinningScale = 8;
+            if (generate === "lines") colorDist = colorDistance(randArr[0], prevArr[0]);
 
-            if (colorDist < colorThreshold) {
-                let size = mapRange(randArr[1], 0, 255, minSize, maxSize);
-                size = size/8;
-
+            if (colorDist < 25) {
                 let dist = distanceRange(randX, randY, prevX, prevY)
+                let size = mapRange(randArr[1], 0, 255, minSize/4, maxSize/4);
+                if (generate !== "chickens" && generate !== "lines") size = size/2.5;
+              
 
                 if (((randArr[1] < upperLimit && randArr[1] > lowerLimit) && (prevArr[1] < upperLimit && prevArr[1] > lowerLimit))) {
                     if ((dist < distance)) {
                         const quadtree = qtree.current;
                         let thinAmount = size/thinningScale;
                         let range = new Rect(randX, randY, thinAmount, thinAmount);
-                        let points = (quadtree as QuadTree).query(range, null);
-
-
-                        if (!(points as any).length) {
-                            let m = new Point(randX, randY, "empty");
+                        let points = quadtree?.query(num, range, null);
                         
-                            if (generate === "chickens") drawChicken(randX, randY, size, size, ctx, randArr[0], prevArr[0], spriteLines, spriteDetail, spriteOtherDetail, spriteBody);
+                        if (!points?.length) {
+                            let m = new Point(randX, randY, "empty", num);
+                            quadtree?.insert(m);
+                        
+                        
+                            if (generate === "chickens") drawChicken(randX, randY, size, size, ctx, randArr[0], prevArr[0], allSprites);
                             else if (generate === "lines") curves.current.push([randX, randY]);
                             else if (generate === "circles") drawRoughCircle(randX, randY, size, rc, randArr[0], prevArr[0], num);
                             else if (generate === "cubes") drawRoughCube(randX, randY, size, rc, randArr[0], prevArr[0], num);
                             else if (generate === "pyramids") drawRoughPyramid(randX, randY, size, rc, randArr[0], prevArr[0], num);
                             else if (generate === "stars") drawRoughStar(randX, randY, size, 10, 4, rc, randArr[0], num+2);
-                            else if (generate === "heart") drawRoughtHeart(randX, randY, size/3, rc, randArr[0], num+2);
+                            else if (generate === "heart") drawRoughtHeart(randX, randY, size, rc, randArr[0], num+2);
 
                             prevX = randX;
                             prevY = randY;
@@ -212,7 +219,7 @@ export const Chickens1000 = () => {
 
         if (curves.current.length) {
             rc.curve(curves.current, {
-                stroke: `rgb(${prevArr[0][0]}, ${prevArr[0][1]}, ${prevArr[0][2]})`, strokeWidth: 1, roughness: Math.random()*(num+2)+1
+                stroke: `rgb(${prevArr[0][0]}, ${prevArr[0][1]}, ${prevArr[0][2]})`, strokeWidth: 6-num/2, roughness: Math.random()*(num+2)+1,
             });
     
             curves.current.length = 0;
@@ -231,18 +238,20 @@ export const Chickens1000 = () => {
 
     return (
         <React.Fragment>
-            <canvas ref={c} className="absolute inset-0 w-full h-full overflow-hidden z-20 bg-black" />
-            <canvas ref={c0} className="invisible" />
-            <canvas ref={c1} className="invisible" />
-            <canvas ref={c2} className="invisible" />
-            <canvas ref={c3} className="invisible" />
-            <canvas ref={c4} className="invisible" />
-            <canvas ref={c5} className="invisible" />
-            <canvas ref={c6} className="invisible" />
-            <canvas ref={c7} className="invisible" />
-            <canvas ref={c8} className="invisible" />
-            <canvas ref={cImg} className="invisible" />
+            <canvas ref={c} className="absolute inset-0 w-full h-full overflow-hidden z-20 bg-black"/>
+            <canvas ref={c0} className="invisible"/>
+            <canvas ref={c1} className="invisible"/>
+            <canvas ref={c2} className="invisible"/>
+            <canvas ref={c3} className="invisible"/>
+            <canvas ref={c4} className="invisible"/>
+            <canvas ref={c5} className="invisible"/>
+            <canvas ref={c6} className="invisible"/>
+            <canvas ref={c7} className="invisible"/>
+            <canvas ref={c8} className="invisible"/>
+            <canvas ref={cImg} className="invisible"/>
+            <canvas ref={cEdge} className="invisible"/>
             <Image src={portrait} alt="Portrait of Hasib" className="hidden" ref={img} priority/>
+            <Image src={edges} alt="Portrait of Hasib" className="hidden" ref={edge} priority/>
             <Image src={spritesheet} alt="all sprites" className="hidden" ref={sprites} priority unoptimized/>
         </React.Fragment>
     )

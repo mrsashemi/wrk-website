@@ -1,3 +1,4 @@
+import Canvas from "@/components/wizardgram/canvas";
 import { useWindowSize } from "@/hooks/useWindowSize";
 
 function EditPost() {
@@ -10,18 +11,14 @@ function EditPost() {
                 <h2>Edit Post</h2>
                 <button className="postButton">Next</button>
             </div>
-            <div className="flex justify-center m-1 h-60 border-2 border-solid">
-                <canvas></canvas>
-            </div>
-            <div className="flex m-5">
-                <div className="flex flex-col justify-center items-center w-1/3">
+            <Canvas margins={'m-1'} />
+            <div className="flex m-1 h-1/3">
+                <div className="flex flex-col justify-center items-center h-full">
                     <h5>Filter</h5>
-                    <div className="flex justify-center w-full h-20 border-2 border-solid">
-                        <canvas></canvas>
-                    </div>
+                    <Canvas margins={'m-1'} />
                 </div>
             </div>
-            <div className="flex justify-evenly m-10">
+            <div className="flex justify-evenly m-5">
                 <button className="editButton">Filters</button>
                 <button className="editButton">Edit</button>
             </div>

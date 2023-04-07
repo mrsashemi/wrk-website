@@ -56,6 +56,7 @@ export const tileFragment: string = `
 
   // Computes the variance of colors surrounding the center of a given quad, used to tile the image based on how detailed specific areas are
   // Original Probabilstic QuadTree Algorithm by Ciphrd. Algo explanation here: https://ciphrd.com/2020/04/02/building-a-quadtree-filter-in-glsl-using-a-probabilistic-approach/
+  // I've simplified the variance formula as much as possible so it is computed in a single pass
   float constructQuadTree (vec2 center, float size) {    
     vec3 avg = vec3(0); // mean
     vec3 var = vec3(0); // variance

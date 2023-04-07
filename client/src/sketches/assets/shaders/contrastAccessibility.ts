@@ -1,3 +1,7 @@
+// This shader is based on the following article, https://annekagoss.medium.com/accessible-webgl-43d15f9caa21
+// We want to adjust the contrast ratios to meet web content accesibility guidelines. 
+// I have found that adjusting the contrast according to the HSV color space works best for my sketches
+// In addition, I've implemented sharpening to try and save the quality on lower resolution sketches (for perfomance purposes)
 export const contrastFragment: string = `
   #ifdef GL_ES
   precision mediump float;
@@ -18,6 +22,7 @@ export const contrastFragment: string = `
   #define light 0.05
   #define dark 0.2
   
+  //rgb color conversions
   vec3 rgb2hsv(vec3 c) {
     vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
     vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
@@ -34,23 +39,27 @@ export const contrastFragment: string = `
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
   }
   
+  // formula for finding the luminance for normalized, gamma-corrected colors https://www.w3.org/TR/WCAG20-TECHS/G18.html#G18-tests
   float gammaCorrection(float colorChannel) {
     if (colorChannel <= 0.03928) return colorChannel / 1.055;
     else return pow((colorChannel + 0.055) / 1.055, 2.4);
   }
-  
+
+  // based on math to find luminance
   float W3Luminance(vec3 rgb) {
     float r = gammaCorrection(rgb.r);
     float g = gammaCorrection(rgb.g);
     float b = gammaCorrection(rgb.b);
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b; // Correction for perceptual color differences
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b; 
   }
   
+  // check if we need to adjust the colors or not
   bool lightenBackground(float bgl, float fgl) {
     if (fgl == bgl) return bgl < 0.5;
     else return bgl > fgl;
   }
   
+  // if we need to adjust the pixel colors, find a luminance that would result in our contrat target ratio
   float newLuminance(float fgl, float target, bool up) {
     if (up) return (target * (fgl + 0.075)) + 0.05;
     else return ((fgl + 0.05 - (target * 0.05)) / target);
@@ -75,12 +84,14 @@ export const contrastFragment: string = `
   }
   
   vec3 makeAccessible(vec3 bg, vec3 fg) {
-    float bgl = W3Luminance(bg);
     float fgl = W3Luminance(fg);
     float targetRatio = 4.5; //compliance level, 7.0 for AAA
     return shiftHSV(bg, fgl, targetRatio);
   }
 
+  
+  // from https://www.shadertoy.com/view/4tcGW2, slightly tweaked to match the luminance formula above
+  // helps with performance as it allows us to use a lower resolution image while saving some of the quality
   mat3 YUVFromRGB = mat3(
     vec3(0.299,-0.14713, 0.615),
     vec3(0.587,-0.28886,-0.51499),
@@ -92,7 +103,7 @@ export const contrastFragment: string = `
     vec3(1.13983,-0.580,0.0));
  
   float extractLuma(vec3 c) {
-    return c.r * 0.299 + c.g * 0.587 + c.b * 0.114;
+    return c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722;
   }
   
     
@@ -154,7 +165,8 @@ export const contrastFragment: string = `
   }
 `
 
-
+// from https://www.shadertoy.com/view/4tcGW2, slightly tweaked to match the luminance formula above
+// helps with performance as it allows us to use a lower resolution image while saving some of the quality
 export const sharpenFragment: string = `
   #ifdef GL_ES
   precision mediump float;
@@ -177,7 +189,7 @@ export const sharpenFragment: string = `
     vec3(1.13983,-0.580,0.0));
  
   float extractLuma(vec3 c) {
-    return c.r * 0.299 + c.g * 0.587 + c.b * 0.114;
+    return c.r * 0.2126 + c.g * 0.7152 + c.b * 0.0722;
   }
     
   void main() {

@@ -103,3 +103,15 @@ body {
 .modal.show {
   bottom: 0
 }
+
+input[type="range"]::-webkit-slider-thumb {
+  -moz-appearance: none !important;
+  appearance: none !important;
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border: solid 2px black;
+  background: transparent;
+  cursor: pointer;
+  z-index: 2;
+}

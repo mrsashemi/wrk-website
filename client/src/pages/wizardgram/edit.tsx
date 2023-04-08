@@ -1,6 +1,8 @@
 import Canvas from "@/components/wizardgram/canvas";
 import Slider from "@/components/wizardgram/slider";
 import { useWindowSize } from "@/hooks/useWindowSize";
+import { setFilterKeys } from "@/state/slices/gramSlice";
+import { useAppDispatch } from "@/state/store/types";
 import React, { useState } from "react";
 
 interface FilterKeys {
@@ -31,6 +33,7 @@ interface SliderTypes {
 
 function EditPost() {
     const windowSize = useWindowSize();
+    const dispatch = useAppDispatch();
     const [currentFilter, setCurrentFilter] = useState<string>('none');
     const [editDisplay, setEditDisplay] = useState<string>('hidden');
     const [filterDisplay, setFilterDisplay] = useState<string>('block');
@@ -185,7 +188,8 @@ function EditPost() {
             displayWEBGL: "block"
         },
     })
-
+    
+    //use sliders to individually modify the uniform values on the webgl canvas
     const [sliders, setSliders] = useState<SliderTypes[][]>([
         [{
             id: "br",
@@ -249,19 +253,19 @@ function EditPost() {
             min: 0.0,
             max: 1.0,
             step: 0.1
-        }],
-
+        }]
     ])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, id: string) => {
         const updatedFilters = {...filters, custom: {...filters.custom, [id]: e.target.value}};
         const tempSliders = [...sliders];
         tempSliders[editIndex][index].value =  Number(e.target.value);
-
+        dispatch(setFilterKeys(updatedFilters.custom));
         setFilters(updatedFilters);
         setSliders((tempSliders as SliderTypes[][]));
     }
 
+    //Select whether to use a premade filter or to customize the image on its own
     const beginEdit = () => {
         setEditDisplay('block');
         setFilterDisplay('hidden')
@@ -296,48 +300,46 @@ function EditPost() {
                 useFilter={filters[currentFilter].useFilter}
                 display2D={filters[currentFilter].display2D}
                 displayWEBGL={filters[currentFilter].displayWEBGL} />
-            <React.Fragment>
-                <div className={`${editDisplay} flex flex-col justify-center items-center m-2 h-1/3 gap-5`}>
-                    {sliders[editIndex].map((item, index) => (
-                        <Slider 
-                            id={item.id} 
-                            color={item.color} 
-                            label={item.label} 
-                            value={item.value}
-                            min={item.min} 
-                            max={item.max} 
-                            step={item.step} 
-                            index={index} 
-                            handleChange={handleChange} />
+            <div className={`${editDisplay} flex flex-col justify-center items-center m-2 h-1/3 gap-5`}>
+                {sliders[editIndex].map((item, index) => (
+                    <Slider 
+                        id={item.id} 
+                        color={item.color} 
+                        label={item.label} 
+                        value={item.value}
+                        min={item.min} 
+                        max={item.max} 
+                        step={item.step} 
+                        index={index} 
+                        handleChange={handleChange} />
+                ))}
+                <div className="flex justify-center items-center gap-5">
+                    <button onClick={() => setEditIndex(0)}>Levels</button>
+                    <button onClick={() => setEditIndex(1)}>RGB</button>
+                    <button onClick={() => setEditIndex(2)}>Strength</button>
+                </div>
+            </div>
+            <div className={`${filterDisplay} flex m-1 h-1/3 grow overflow-scroll`}>
+                    {Object.keys(filters).map((filterKey, index) => (
+                        (filterKey !== 'custom') && 
+                        <div className={`flex flex-col justify-center items-center h-full`} key={index} onClick={() => {return setCurrentFilter(filterKey)}}>
+                            <h5>{filterKey}</h5>
+                            <Canvas 
+                                margins={'m-1'} 
+                                divWidth={'w-24'}
+                                br={filters[filterKey].br}
+                                con={filters[filterKey].con}
+                                sat={filters[filterKey].sat}
+                                red={filters[filterKey].red}
+                                green={filters[filterKey].green}
+                                blue={filters[filterKey].blue}
+                                strength={filters[filterKey].strength}
+                                useFilter={filters[filterKey].useFilter}
+                                display2D={filters[filterKey].display2D}
+                                displayWEBGL={filters[filterKey].displayWEBGL} />
+                        </div>
                     ))}
-                    <div className="flex justify-center items-center gap-5">
-                        <button onClick={() => setEditIndex(0)}>Levels</button>
-                        <button onClick={() => setEditIndex(1)}>RGB</button>
-                        <button onClick={() => setEditIndex(2)}>Strength</button>
-                    </div>
-                </div>
-                <div className={`${filterDisplay} flex m-1 h-1/3 grow overflow-scroll`}>
-                        {Object.keys(filters).map((filterKey, index) => (
-                            (filterKey !== 'custom') && 
-                            <div className={`flex flex-col justify-center items-center h-full`} key={index} onClick={() => {return setCurrentFilter(filterKey)}}>
-                                <h5>{filterKey}</h5>
-                                <Canvas 
-                                    margins={'m-1'} 
-                                    divWidth={'w-24'}
-                                    br={filters[filterKey].br}
-                                    con={filters[filterKey].con}
-                                    sat={filters[filterKey].sat}
-                                    red={filters[filterKey].red}
-                                    green={filters[filterKey].green}
-                                    blue={filters[filterKey].blue}
-                                    strength={filters[filterKey].strength}
-                                    useFilter={filters[filterKey].useFilter}
-                                    display2D={filters[filterKey].display2D}
-                                    displayWEBGL={filters[filterKey].displayWEBGL} />
-                            </div>
-                        ))}
-                </div>
-            </React.Fragment>
+            </div>
             <div className="flex justify-evenly m-5">
                 <button className="editButton" onClick={() => {return beginFilter()}}>Filters</button>
                 <button className="editButton" onClick={() => {return beginEdit()}}>Edit</button>

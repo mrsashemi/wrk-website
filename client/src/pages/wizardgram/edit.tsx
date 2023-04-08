@@ -1,4 +1,5 @@
 import Canvas from "@/components/wizardgram/canvas";
+import Slider from "@/components/wizardgram/slider";
 import { useWindowSize } from "@/hooks/useWindowSize";
 import React, { useState } from "react";
 
@@ -15,14 +16,30 @@ interface FilterKeys {
     displayWEBGL: string;
 }
 
+interface SliderTypes {
+    id: string;
+    color: string;
+    label: string;
+    value: number;
+    min: number;
+    max: number;
+    step: number;
+}
+
+
+
+
 function EditPost() {
     const windowSize = useWindowSize();
-    const [currentFilter, setCurrentFilter] = useState('none');
-    const [edit, setEditing] = useState(true);
+    const [currentFilter, setCurrentFilter] = useState<string>('none');
+    const [editDisplay, setEditDisplay] = useState<string>('hidden');
+    const [filterDisplay, setFilterDisplay] = useState<string>('block');
+    const [editIndex, setEditIndex] = useState<number>(0);
+
 
     //object filters holds information as to which canvas will be shown
     //also holds uniform values that will be passed to the fragment shader in the webgl canvas
-    const filters: {[key: string]: FilterKeys} = {
+    const [filters, setFilters] = useState<{[key: string]: FilterKeys}>({
         none: {
             br: 1.0,
             con: 1.0,
@@ -167,6 +184,94 @@ function EditPost() {
             display2D: "hidden",
             displayWEBGL: "block"
         },
+    })
+
+    const [sliders, setSliders] = useState<SliderTypes[][]>([
+        [{
+            id: "br",
+            color: "bg-neutral-400",
+            label: "brightness",
+            value: 1.0,
+            min: 0.0,
+            max: 5.0,
+            step: 0.1
+        },
+        {
+            id: "con",
+            color: "bg-neutral-400",
+            label: "contrast",
+            value: 1.0,
+            min: 0.0,
+            max: 5.0,
+            step: 0.1
+        },
+        {
+            id: "sat",
+            color: "bg-neutral-400",
+            label: "saturation",
+            value: 1.0,
+            min: 0.0,
+            max: 5.0,
+            step: 0.1
+        }],
+        [{
+            id: "red",
+            color: "bg-red-600",
+            label: "red",
+            value: 1.0,
+            min: 0.0,
+            max: 5.0,
+            step: 0.1
+        },
+        {
+            id: "green",
+            color: "bg-green-600",
+            label: "green",
+            value: 1.0,
+            min: 0.0,
+            max: 5.0,
+            step: 0.1
+        },
+        {
+            id: "blue",
+            color: "bg-blue-600",
+            label: "blue",
+            value: 1.0,
+            min: 0.0,
+            max: 5.0,
+            step: 0.1
+        }],
+        [{
+            id: "strength",
+            color: "bg-neutral-400",
+            label: "strength",
+            value: 0.8,
+            min: 0.0,
+            max: 1.0,
+            step: 0.1
+        }],
+
+    ])
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, id: string) => {
+        const updatedFilters = {...filters, custom: {...filters.custom, [id]: e.target.value}};
+        const tempSliders = [...sliders];
+        tempSliders[editIndex][index].value =  Number(e.target.value);
+
+        setFilters(updatedFilters);
+        setSliders((tempSliders as SliderTypes[][]));
+    }
+
+    const beginEdit = () => {
+        setEditDisplay('block');
+        setFilterDisplay('hidden')
+        setCurrentFilter('custom');
+    }
+
+    const beginFilter = () => {
+        setEditDisplay('hidden');
+        setFilterDisplay('block');
+        setCurrentFilter('none');
     }
 
 
@@ -192,38 +297,29 @@ function EditPost() {
                 display2D={filters[currentFilter].display2D}
                 displayWEBGL={filters[currentFilter].displayWEBGL} />
             <React.Fragment>
-                {edit ? (
-                    <div className="flex m-1 h-1/3 gap-5">
-                        <div className="flex flex-col justify-center w-full items-center h-full">
-                            <h5>levels</h5>
-                            <div className="flex flex-col w-full justify-center items-center relative">
-                                <label htmlFor="br-range" className="absolute z-0 top-0 text-xs">brightness</label>
-                                <input id="br-range" type="range" min="0.0" max="5.0" step="0.05"
-                                    className="absolute inset-0 z-10 w-full h-4 appearance-none bg-transparent border-2 rounded-lg cursor-pointer"></input>
-                            </div>
-                        </div>
-                        <div className="flex flex-col justify-center w-full items-center h-full">
-                            <h5>rgb</h5>
-                            <div>
-                                <label htmlFor="br-range">red</label>
-                                <input id="br-range" type="range" min="0.0" max="5.0" step="0.05" value="1.0" 
-                                    className="w-full h-2 rounded-lg cursor-pointer"></input>
-                            </div>
-                        </div>
-                        <div className="flex flex-col justify-center w-full items-center h-full">
-                            <h5>strength</h5>
-                            <div>
-                                <label htmlFor="br-range">red</label>
-                                <input id="br-range" type="range" min="0.0" max="5.0" step="0.05" value="1.0" 
-                                    className="w-full h-2 rounded-lg cursor-pointer"></input>
-                            </div>
-                        </div>
+                <div className={`${editDisplay} flex flex-col justify-center items-center m-2 h-1/3 gap-5`}>
+                    {sliders[editIndex].map((item, index) => (
+                        <Slider 
+                            id={item.id} 
+                            color={item.color} 
+                            label={item.label} 
+                            value={item.value}
+                            min={item.min} 
+                            max={item.max} 
+                            step={item.step} 
+                            index={index} 
+                            handleChange={handleChange} />
+                    ))}
+                    <div className="flex justify-center items-center gap-5">
+                        <button onClick={() => setEditIndex(0)}>Levels</button>
+                        <button onClick={() => setEditIndex(1)}>RGB</button>
+                        <button onClick={() => setEditIndex(2)}>Strength</button>
                     </div>
-                ) : (
-                    <div className="flex m-1 h-1/3 grow overflow-scroll">
+                </div>
+                <div className={`${filterDisplay} flex m-1 h-1/3 grow overflow-scroll`}>
                         {Object.keys(filters).map((filterKey, index) => (
                             (filterKey !== 'custom') && 
-                            <div className="flex flex-col justify-center items-center h-full" key={index} onClick={() => {return setCurrentFilter(filterKey)}}>
+                            <div className={`flex flex-col justify-center items-center h-full`} key={index} onClick={() => {return setCurrentFilter(filterKey)}}>
                                 <h5>{filterKey}</h5>
                                 <Canvas 
                                     margins={'m-1'} 
@@ -240,12 +336,11 @@ function EditPost() {
                                     displayWEBGL={filters[filterKey].displayWEBGL} />
                             </div>
                         ))}
-                    </div>
-                )}
+                </div>
             </React.Fragment>
             <div className="flex justify-evenly m-5">
-                <button className="editButton">Filters</button>
-                <button className="editButton">Edit</button>
+                <button className="editButton" onClick={() => {return beginFilter()}}>Filters</button>
+                <button className="editButton" onClick={() => {return beginEdit()}}>Edit</button>
             </div>
         </div>
     )

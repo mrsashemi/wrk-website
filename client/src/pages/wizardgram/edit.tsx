@@ -29,8 +29,6 @@ interface SliderTypes {
 }
 
 
-
-
 function EditPost() {
     const windowSize = useWindowSize();
     const dispatch = useAppDispatch();
@@ -278,18 +276,17 @@ function EditPost() {
         setCurrentFilter('none');
     }
 
-
-
     return (
-        <div className="flex flex-col w-screen h-screen justify-between" style={{width: `calc(${windowSize[0]*0.01}px*100)`, height: `calc(${windowSize[1]*0.01}px*100)`}}>
-            <div className="flex justify-between items-center m-1">
-                <button className="postButton">Back</button>
-                <h2>Edit Post</h2>
-                <button className="postButton">Next</button>
+        <div className="flex flex-col w-screen h-screen justify-between xs:text-sm sm:text-base md:text-lg lg:text-2xl" style={{width: `calc(${windowSize[0]*0.01}px*100)`, height: `calc(${windowSize[1]*0.01}px*100)`}}>
+            <div className="flex justify-between items-center border-b-2 md:mb-2">
+                <button className="px-1 sm:p-2 md:px-3 lg:p-3 lg:px-4 border-r-2">Back</button>
+                <h2 className="xs:text-base sm:text-lg md:text-xl lg:text-3xl">Edit Post</h2>
+                <button className="px-1 border-l-2 sm:p-2 md:px-3 lg:p-3 lg:px-4">Next</button>
             </div>
             <Canvas 
-                margins={'m-1'} 
+                margins={'m-4'} 
                 divWidth={''}
+                scale={`xs:w-76 xs:h-76 sm:w-96 sm:h-96 md:w-128 md:h-128 lg:w-136 lg:h-136 2xl:w-144 2xl:h-144`}
                 br={filters[currentFilter].br}
                 con={filters[currentFilter].con}
                 sat={filters[currentFilter].sat}
@@ -300,9 +297,10 @@ function EditPost() {
                 useFilter={filters[currentFilter].useFilter}
                 display2D={filters[currentFilter].display2D}
                 displayWEBGL={filters[currentFilter].displayWEBGL} />
-            <div className={`${editDisplay} flex flex-col justify-center items-center m-2 h-1/3 gap-5`}>
+            <div className={`${editDisplay} flex flex-col justify-center items-center m-4 xs:h-48 md:h-76 gap-5`}>
                 {sliders[editIndex].map((item, index) => (
                     <Slider 
+                        key={index}
                         id={item.id} 
                         color={item.color} 
                         label={item.label} 
@@ -313,20 +311,21 @@ function EditPost() {
                         index={index} 
                         handleChange={handleChange} />
                 ))}
-                <div className="flex justify-center items-center gap-5">
-                    <button onClick={() => setEditIndex(0)}>Levels</button>
-                    <button onClick={() => setEditIndex(1)}>RGB</button>
-                    <button onClick={() => setEditIndex(2)}>Strength</button>
+                <div className="flex justify-between items-center w-full mt-2 p-0 gap-5 border-y-2 xs:text-base sm:text-lg md:text-xl lg:text-3xl">
+                    <button onClick={() => setEditIndex(0)} className="px-2 border-x-2 sm:p-2 md:px-3 lg:p-3 lg:px-4">Levels</button>
+                    <button onClick={() => setEditIndex(1)} className="sm:p-2 md:px-3 lg:p-3 lg:px-4">RGB</button>
+                    <button onClick={() => setEditIndex(2)} className="px-2 border-x-2 sm:p-2 md:px-3 lg:p-3 lg:px-4">Strength</button>
                 </div>
             </div>
-            <div className={`${filterDisplay} flex m-1 h-1/3 grow overflow-scroll`}>
+            <div className={`${filterDisplay} flex m-4 xs:h-48  md:h-76 overflow-scroll`}>
                     {Object.keys(filters).map((filterKey, index) => (
                         (filterKey !== 'custom') && 
                         <div className={`flex flex-col justify-center items-center h-full`} key={index} onClick={() => {return setCurrentFilter(filterKey)}}>
                             <h5>{filterKey}</h5>
                             <Canvas 
-                                margins={'m-1'} 
+                                margins={'m-2'} 
                                 divWidth={'w-24'}
+                                scale={`xs:w-20 xs:h-20 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 2xl:w-56 2xl:h-56`}
                                 br={filters[filterKey].br}
                                 con={filters[filterKey].con}
                                 sat={filters[filterKey].sat}
@@ -340,9 +339,9 @@ function EditPost() {
                         </div>
                     ))}
             </div>
-            <div className="flex justify-evenly m-5">
-                <button className="editButton" onClick={() => {return beginFilter()}}>Filters</button>
-                <button className="editButton" onClick={() => {return beginEdit()}}>Edit</button>
+            <div className="flex justify-evenly border-t-2 xs:text-base sm:text-lg md:text-xl lg:text-3xl">
+                <button className="py-4 w-1/2  border-r-2" onClick={() => {return beginFilter()}}>Filters</button>
+                <button className="py-4 w-1/2" onClick={() => {return beginEdit()}}>Edit</button>
             </div>
         </div>
     )

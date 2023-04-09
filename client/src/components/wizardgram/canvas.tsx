@@ -10,6 +10,7 @@ interface CanvasProps {
     divWidth: string;
     display2D: string;
     displayWEBGL: string;
+    scale: string;
     useFilter: boolean;
     br: number;
     con: number;
@@ -95,7 +96,7 @@ function Canvas(props:CanvasProps) {
     ])
 
     return (
-        <div className={`flex flex-col justify-center ${props.margins} ${props.divWidth} h-2/4 border-2 border-solid`}>
+        <div className={`flex flex-col justify-center self-center ${props.margins} ${props.divWidth} ${props.scale} border-2 border-solid`}>
             <canvas ref={cFilter} className={`${props.displayWEBGL}`} style={aspect}></canvas>
             <canvas ref={c} className={`${props.display2D}`} style={aspect}></canvas>
             <Image src={portrait} alt="Portrait of Hasib" className="hidden" ref={img} priority/>

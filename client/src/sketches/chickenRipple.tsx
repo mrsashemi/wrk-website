@@ -13,6 +13,8 @@ import { getRandomColor, loadChickens, tint } from "./methods/effects";
 import { addTexture, create2Dbuffer, createGLbuffer, prepareShader, setUniform1f, setUniform2f } from "./methods/createbuffer"
 
 
+
+
 export const ChickenRipple = () => {
     const isPressing = useSelector(getPressing);
     const dispatch = useDispatch();
@@ -27,7 +29,7 @@ export const ChickenRipple = () => {
     const sketchId = useRef<any>(null);
 
     //data
-    const pixels = useRef<any>();
+    const pixels = useRef<Uint8ClampedArray | null>(null);
 
     //image refs
     const img = useRef<HTMLImageElement>(null);
@@ -46,12 +48,12 @@ export const ChickenRipple = () => {
     const cImg = useRef<HTMLCanvasElement>(null);
 
     //shaders
-    const quadRipples = useRef<any>(null)
-    const adjustContrast = useRef<any>(null)
-    const sharpenResult = useRef<any>(null)
+    const quadRipples = useRef<WebGLShader | null>(null)
+    const adjustContrast = useRef<WebGLShader | null>(null)
+    const sharpenResult = useRef<WebGLShader | null>(null)
 
     //contexts
-    const glSharpen = useRef<any>(null);
+    const glSharpen = useRef<WebGL2RenderingContext | null>(null);
     const glRipple = useRef<any>(null);
     const glContrast = useRef<any>(null);
     const ctxCurrent = useRef<any>(null);
@@ -69,7 +71,7 @@ export const ChickenRipple = () => {
 
             glRipple.current = createGLbuffer(glRipple.current, cRipple.current, w, h);
             glContrast.current = createGLbuffer(glContrast.current, cContrast.current, w, h);
-            glSharpen.current = createGLbuffer(glSharpen.current, cSharpen.current, w, h);
+            glSharpen.current = createGLbuffer((glSharpen.current as WebGL2RenderingContext), cSharpen.current, w, h);
 
             ctxCurrent.current = create2Dbuffer(ctxCurrent.current, cCurrent.current, w, h, false, null);
             ctxPrevious.current = create2Dbuffer(ctxPrevious.current, cPrevious.current, w, h, false, null);
@@ -107,11 +109,11 @@ export const ChickenRipple = () => {
         sketchId.current = requestAnimationFrame(sketch as any);
 
         if (spriteBitMap) {
-            let randX = Math.floor(Math.random()*(cRipple as any).current.width);
-            let randY = Math.floor(Math.random()*(cRipple as any).current.height);
+            let randX: number = Math.floor(Math.random()*(cRipple as any).current.width);
+            let randY: number = Math.floor(Math.random()*(cRipple as any).current.height);
 
         
-            let randArr: any = getRandomColor(randX, randY, (cRipple as any).current.width, pixels.current);
+            let randArr: any = getRandomColor(randX, randY, (cRipple as any).current.width, (pixels.current as Uint8ClampedArray));
             let chkn = Math.floor(Math.random()*2);
     
             //lines and tinted are the same
@@ -148,8 +150,8 @@ export const ChickenRipple = () => {
         glContrast.current.drawArrays(glContrast.current.TRIANGLE_STRIP, 0, 4); // Draw the quad
 
         // sharpen
-        addTexture(glSharpen.current, glSharpen.current.TEXTURE0, cContrast.current, sharpenResult.current, 0, 'uiBackground');
-        glSharpen.current.drawArrays(glSharpen.current.TRIANGLE_STRIP, 0, 4); // Draw the quad
+        addTexture(glSharpen.current, (glSharpen.current as WebGL2RenderingContext).TEXTURE0, cContrast.current, sharpenResult.current, 0, 'uiBackground');
+        (glSharpen.current as WebGL2RenderingContext).drawArrays((glSharpen.current as WebGL2RenderingContext).TRIANGLE_STRIP, 0, 4); // Draw the quad
 
         if (Math.floor(now/1000) % 5 === 0) ctxChickens.current.clearRect(0, 0, (cRipple as any).current.width, (cRipple as any).current.height);
         if (isPressing) ctxCurrent.current.clearRect(0, 0, (cRipple as any).current.width, (cRipple as any).current.height);

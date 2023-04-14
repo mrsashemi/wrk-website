@@ -66,7 +66,7 @@ export const compile = (gl: any, vshader: any, fshader: any) => {
 }
 
 export const createGLbuffer = (gl: WebGL2RenderingContext, canvas: any, w: any, h: any) => {
-    (gl as any) = canvas.getContext('webgl2', {
+    gl = canvas.getContext('webgl2', {
         alpha: true,
         antialias: true,
         depth: true,

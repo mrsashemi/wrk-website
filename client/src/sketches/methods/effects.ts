@@ -1,48 +1,56 @@
-export const loadChickens = async (spritesheet: any, spriteJSON: any) => {
-    let lineSprites: any = [];
-    let detailSprites: any = [];
-    let otherDetailSprites: any = [];
-    let bodySprites: any = [];
+import { RoughCanvas } from "roughjs/bin/canvas";
+import { Point } from "roughjs/bin/geometry";
 
-    let allsprites: any = spritesheet;
-    let allspritesJSON: any = spriteJSON
+export const loadChickens = async (spritesheet: HTMLImageElement, spriteJSON: any) => {
+    let lineSprites: ImageBitmap[] = [];
+    let detailSprites: ImageBitmap[] = [];
+    let otherDetailSprites: ImageBitmap[] = [];
+    let bodySprites: ImageBitmap[] = [];
+    
     for (let i = 0; i < 2; i++) {
         lineSprites.push(await createImageBitmap(
-            allsprites, 
-            allspritesJSON.frames[`chickenlines-${i}.png`]["frame"]["x"], 
-            allspritesJSON.frames[`chickenlines-${i}.png`]["frame"]["y"], 
-            allspritesJSON.frames[`chickenlines-${i}.png`]["frame"]["w"],
-            allspritesJSON.frames[`chickenlines-${i}.png`]["frame"]["h"])
+            spritesheet, 
+            spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["x"], 
+            spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["y"], 
+            spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["w"],
+            spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["h"])
         )
         detailSprites.push(await createImageBitmap(
-            allsprites, 
-            allspritesJSON.frames[`chickendetail-${i}.png`]["frame"]["x"], 
-            allspritesJSON.frames[`chickendetail-${i}.png`]["frame"]["y"], 
-            allspritesJSON.frames[`chickendetail-${i}.png`]["frame"]["w"],
-            allspritesJSON.frames[`chickendetail-${i}.png`]["frame"]["h"]
+            spritesheet, 
+            spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["x"], 
+            spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["y"], 
+            spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["w"],
+            spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["h"]
         ))
 
         otherDetailSprites.push(await createImageBitmap(
-            allsprites, 
-            allspritesJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["x"], 
-            allspritesJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["y"], 
-            allspritesJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["w"],
-            allspritesJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["h"]
+            spritesheet, 
+            spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["x"], 
+            spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["y"], 
+            spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["w"],
+            spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["h"]
         ))
 
         bodySprites.push(await createImageBitmap(
-            allsprites, 
-            allspritesJSON.frames[`chickenbody-${i}.png`]["frame"]["x"], 
-            allspritesJSON.frames[`chickenbody-${i}.png`]["frame"]["y"], 
-            allspritesJSON.frames[`chickenbody-${i}.png`]["frame"]["w"],
-            allspritesJSON.frames[`chickenbody-${i}.png`]["frame"]["h"]
+            spritesheet, 
+            spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["x"], 
+            spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["y"], 
+            spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["w"],
+            spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["h"]
         ))
     }
 
     return {lines: lineSprites, detail: detailSprites, otherdetail: otherDetailSprites, body: bodySprites};
 }
 
-export function drawChicken(x: number, y: number, w: number, h: number, ctx: any, col: any, col2: any, sprites: any) {
+interface Sprites {
+    lines: ImageBitmap[],
+    detail: ImageBitmap[],
+    otherdetail: ImageBitmap[],
+    body: ImageBitmap[]
+}
+
+export function drawChicken(x: number, y: number, w: number, h: number, ctx: CanvasRenderingContext2D, col: number[], col2: number[], sprites: Sprites) {
     let chkn = Math.floor(Math.random()*2);
 
     //lines and tinted are the same
@@ -57,14 +65,14 @@ export function drawChicken(x: number, y: number, w: number, h: number, ctx: any
 }
 
 
-export function drawRoughCircle(x: any, y: any, size: any, rc: any, col: any, col2: any, num: any) {
+export function drawRoughCircle(x: number, y: number, size: number, rc: RoughCanvas, col: number[], col2: number[], num: number) {
     rc.circle(x, y, size, {fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "solid", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2}); 
     rc.circle(x, y, size/1.5, {fill: `rgb(${col2[0]}, ${col2[1]}, ${col2[2]})`, fillStyle: "hachure", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2}); 
     rc.circle(x, y, size/3, {fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "cross-hatch", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2}); 
 }
 
 
-export function drawRoughCube(cX: any, cY: any, size: any, rc: any, col: any, col2: any, num: any) {
+export function drawRoughCube(cX: number, cY: number, size: number, rc: RoughCanvas, col: number[], col2: number[], num: number) {
     let poly = [];
 
     for(let a = 0; a < Math.PI*2; a+=Math.PI*2/6) {
@@ -73,29 +81,29 @@ export function drawRoughCube(cX: any, cY: any, size: any, rc: any, col: any, co
     poly.push([cX, cY]);
 
     if (cX%2==0) {
-        rc.polygon([poly[0], poly[1], poly[2], poly[7]], {
+        rc.polygon(([poly[0], poly[1], poly[2], poly[7]] as Point[]), {
             fill: `rgb(${col2[0]}, ${col2[1]}, ${col2[2]})`, fillStyle: "solid", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
-        rc.polygon([poly[7], poly[2], poly[3], poly[4]], {
+        rc.polygon(([poly[7], poly[2], poly[3], poly[4]] as Point[]), {
             fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "zigzag", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
-        rc.polygon([poly[0], poly[7], poly[4], poly[5]], {
+        rc.polygon(([poly[0], poly[7], poly[4], poly[5]] as Point[]), {
             fill: `rgb(${col2[0]}, ${col2[1]}, ${col2[2]})`, fillStyle: "dots", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
     } else {
-        rc.polygon([poly[0], poly[1], poly[7], poly[5]], {
+        rc.polygon(([poly[0], poly[1], poly[7], poly[5]] as Point[]), {
             fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "dashed", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
-        rc.polygon([poly[7], poly[1], poly[2], poly[3]], {
+        rc.polygon(([poly[7], poly[1], poly[2], poly[3]] as Point[]), {
             fill: `rgb(${col2[0]}, ${col2[1]}, ${col2[2]})`, fillStyle: "zigzag-line", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
-        rc.polygon([poly[3], poly[7], poly[5], poly[4]], {
+        rc.polygon(([poly[3], poly[7], poly[5], poly[4]] as Point[]), {
             fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "solid", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
     }
 }
 
-export function drawRoughPyramid(cX: any, cY: any, size: any, rc: any, col: any, col2: any, num: any) {
+export function drawRoughPyramid(cX: number, cY: number, size: number, rc: RoughCanvas, col: number[], col2: number[], num: number) {
     let poly = [];
 
     for(let a = 0; a < Math.PI*2; a+=Math.PI*2/6) {
@@ -104,29 +112,29 @@ export function drawRoughPyramid(cX: any, cY: any, size: any, rc: any, col: any,
     poly.push([cX, cY]);
 
     if (cX%2==0) {
-        rc.polygon([poly[0], poly[2], poly[7]], {
+        rc.polygon(([poly[0], poly[2], poly[7]] as Point[]), {
             fill: `rgb(${col2[0]}, ${col2[1]}, ${col2[2]})`, fillStyle: "solid", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
-        rc.polygon([poly[7], poly[2], poly[4]], {
+        rc.polygon(([poly[7], poly[2], poly[4]] as Point[]), {
             fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "zigzag", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
-        rc.polygon([poly[0], poly[7], poly[4]], {
+        rc.polygon(([poly[0], poly[7], poly[4]] as Point[]), {
             fill: `rgb(${col2[0]}, ${col2[1]}, ${col2[2]})`, fillStyle: "dots", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
     } else {
-        rc.polygon([poly[1], poly[3], poly[7]], {
+        rc.polygon(([poly[1], poly[3], poly[7]] as Point[]), {
             fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "dashed", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
-        rc.polygon([poly[7], poly[3], poly[5]], {
+        rc.polygon(([poly[7], poly[3], poly[5]] as Point[]), {
             fill: `rgb(${col2[0]}, ${col2[1]}, ${col2[2]})`, fillStyle: "zigzag-line", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
-        rc.polygon([poly[1], poly[7], poly[5]], {
+        rc.polygon(([poly[1], poly[7], poly[5]] as Point[]), {
             fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "solid", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
         })
     }
 }
 
-export function drawRoughStar(x: any, y: any, radius1: any, radius2: any, npoints: any, rc: any, col: any, num: any) {
+export function drawRoughStar(x: number, y: number, radius1: number, radius2: number, npoints: number, rc: RoughCanvas, col: any, num: any) {
 	let angle = (Math.PI*2 )/ npoints;
 	let halfAngle = angle / 2.0;
     let star = [];
@@ -141,13 +149,13 @@ export function drawRoughStar(x: any, y: any, radius1: any, radius2: any, npoint
 	  star.push([sx, sy]);
 	}
 
-    rc.polygon(star, {
+    rc.polygon((star as Point[]), {
         fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "cross-hatch", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
     })
 
 }
 
-export function drawRoughtHeart(x: any, y: any, size: any, rc: any, col: any, num: any) {
+export function drawRoughtHeart(x: number, y: number, size: number, rc: RoughCanvas, col: number[], num: number) {
     let heart = [];
 
     for (let a = 0; a < Math.PI*2; a += 0.01) {
@@ -157,12 +165,12 @@ export function drawRoughtHeart(x: any, y: any, size: any, rc: any, col: any, nu
         heart.push([currX, currY]);
 	}
 
-    rc.polygon(heart, {
+    rc.polygon((heart as Point[]), {
         fill: `rgb(${col[0]}, ${col[1]}, ${col[2]})`, fillStyle: "zigzag", strokeWidth: 1, roughness: Math.random() * (num+1), bowing: num+2
     })
 }
 
-export function tint(img: any, color: any) {
+export function tint(img: HTMLImageElement | ImageBitmap, color: number[]) {
     // Create a buffer element to draw based on the Image img
     let tinted;
     const buffer = document.createElement('canvas');
@@ -186,25 +194,25 @@ export function tint(img: any, color: any) {
     return tinted;
 }
 
-export function getRandomColor(x: any, y: any, w: any, context: any) {
+export function getRandomColor(x: number, y: number, w: number, context: Uint8ClampedArray) {
     const index = y * (w*4) + x*4;
     let color = [context[index], context[index+1], context[index+2]];
     let brightness = Math.max(color[0], color[1], color[2]);
     return [color, brightness];
 }
 
-export function mapRange (value: any, a: any, b: any, c: any, d: any) {
+export function mapRange (value: number, a: number, b: number, c: number, d: number) {
     value = (value - a) / (b - a);
     return c + value * (d - c);
 }
 
-export function distanceRange(x1: any, y1: any, x2: any, y2: any) {
+export function distanceRange(x1: number, y1: number, x2: number, y2: number) {
     const a = x1 - x2;
     const b = y1 - y2;
     return Math.sqrt(a*a + b*b); //Math.hypot is more accurate, but slower
 }
 
-export function colorDistance(color1: any, color2: any) {
+export function colorDistance(color1: number[], color2: number[]) {
     const dr = color2[0] - color1[0];
     const dg = color2[1] - color1[1];
     const db = color2[2] - color1[2];

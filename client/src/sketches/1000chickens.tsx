@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { useEffect, useRef, useState } from "react"
+import React, { RefObject, useEffect, useRef, useState } from "react"
 import portrait from './assets/images/hasibwide-nobg.png'
 import edges from './assets/images/hasibwide-edges.png'
 import spritesheet from './assets/chickens/spritesheet.png'
@@ -10,11 +10,19 @@ import { setCanvasSize } from "@/state/slices/canvasSlice";
 import { useDispatch } from "react-redux";
 import { Point, QuadTree, Rect } from "./methods/quadtree";
 import rough from "roughjs/bundled/rough.cjs.js";
+import { RoughCanvas } from "roughjs/bin/canvas";
+
+interface Sprites {
+    lines: ImageBitmap[],
+    detail: ImageBitmap[],
+    otherdetail: ImageBitmap[],
+    body: ImageBitmap[]
+}
 
 export const Chickens1000 = () => {
     //state
-    const [sketchReady, setReady] = useState(false);
-    const [allSprites, setAllSprites] = useState(null);
+    const [sketchReady, setReady] = useState<boolean>(false);
+    const [allSprites, setAllSprites] = useState<Sprites | null>(null);
 
     //constants
     const brightnessLimits = [255, 221, 187, 155, 123, 94, 66, 40, 14, 0];
@@ -23,7 +31,7 @@ export const Chickens1000 = () => {
     const dispatch = useDispatch();
 
     //animate
-    const sketchId = useRef<any>(null);
+    const sketchId = useRef<number | null>(null);
 
     //images
     const img = useRef<HTMLImageElement>(null);
@@ -32,9 +40,9 @@ export const Chickens1000 = () => {
 
     //data 
     const qtree = useRef<QuadTree>();
-    const pixels = useRef<DataView>();
-    const edgePixels = useRef<DataView>();
-    const curves = useRef<any>(null);
+    const pixels = useRef<Uint8ClampedArray | null>();
+    const edgePixels = useRef<Uint8ClampedArray | null>();
+    const curves = useRef<number[][] | null>(null);
 
     //canvas and buffers
     const c = useRef<HTMLCanvasElement>(null);
@@ -49,39 +57,39 @@ export const Chickens1000 = () => {
     const c8 = useRef<HTMLCanvasElement>(null);
     const cImg = useRef<HTMLCanvasElement>(null);
     const cEdge = useRef<HTMLCanvasElement>(null);
-    const cBuffers = useRef<any>(null);
+    const cBuffers = useRef<RefObject<HTMLCanvasElement>[] | null>(null);
 
     //contexts
-    const ctx = useRef<any>(null);
-    const ctx0 = useRef<any>(null);
-    const ctx1 = useRef<any>(null);
-    const ctx2 = useRef<any>(null);
-    const ctx3 = useRef<any>(null);
-    const ctx4 = useRef<any>(null);
-    const ctx5 = useRef<any>(null);
-    const ctx6 = useRef<any>(null);
-    const ctx7 = useRef<any>(null);
-    const ctx8 = useRef<any>(null);
-    const ctxImg = useRef<any>(null);
-    const ctxEdge = useRef<any>(null);
-    const ctxBuffers = useRef<any>(null);
+    const ctx = useRef<RenderingContext | null>(null);
+    const ctx0 = useRef<RenderingContext | null>(null);
+    const ctx1 = useRef<RenderingContext | null>(null);
+    const ctx2 = useRef<RenderingContext | null>(null);
+    const ctx3 = useRef<RenderingContext | null>(null);
+    const ctx4 = useRef<RenderingContext | null>(null);
+    const ctx5 = useRef<RenderingContext | null>(null);
+    const ctx6 = useRef<RenderingContext | null>(null);
+    const ctx7 = useRef<RenderingContext | null>(null);
+    const ctx8 = useRef<RenderingContext | null>(null);
+    const ctxImg = useRef<RenderingContext | null>(null);
+    const ctxEdge = useRef<RenderingContext | null>(null);
+    const ctxBuffers = useRef<RefObject<RenderingContext | null>[] | null>(null);
 
     //rough
-    const rc0 = useRef<any>(null);
-    const rc1 = useRef<any>(null);
-    const rc2 = useRef<any>(null);
-    const rc3 = useRef<any>(null);
-    const rc4 = useRef<any>(null);
-    const rc5 = useRef<any>(null);
-    const rc6 = useRef<any>(null);
-    const rc7 = useRef<any>(null);
-    const rc8 = useRef<any>(null);
-    const rcBuffers = useRef<any>(null);
+    const rc0 = useRef<RoughCanvas>(null);
+    const rc1 = useRef<RoughCanvas>(null);
+    const rc2 = useRef<RoughCanvas>(null);
+    const rc3 = useRef<RoughCanvas>(null);
+    const rc4 = useRef<RoughCanvas>(null);
+    const rc5 = useRef<RoughCanvas>(null);
+    const rc6 = useRef<RoughCanvas>(null);
+    const rc7 = useRef<RoughCanvas>(null);
+    const rc8 = useRef<RoughCanvas>(null);
+    const rcBuffers = useRef<RefObject<RoughCanvas>[] | null>(null);
 
     //initialize sketch
     useEffect(() => {
         const initSketch = async () => {
-            const i: any = img.current;
+            const i: HTMLImageElement = (img.current as HTMLImageElement);
             let w = Math.floor(i.width);
             let h = Math.floor(i.height);
 
@@ -93,18 +101,18 @@ export const Chickens1000 = () => {
                 let cx = ctxBuffers.current[i];
                 let cn = cBuffers.current[i];
                 let rn = rcBuffers.current[i];
-                cx.current = create2Dbuffer(cx.current, cn.current, w, h, false, null);
-                rn.current = rough.canvas((cn as any).current);
+                (cx.current as RenderingContext | null) = create2Dbuffer(cx.current, (cn.current as HTMLCanvasElement), w, h, false, null);
+                (rn.current as RoughCanvas) = rough.canvas((cn.current as HTMLCanvasElement));
             }
 
-            ctx.current = create2Dbuffer(ctx.current, c.current, w, h, false, null);
-            ctxImg.current = create2Dbuffer(ctxImg.current, cImg.current, w, h, true, i);
-            ctxEdge.current = create2Dbuffer(ctxEdge.current, cEdge.current, w, h, true, edge.current);
+            ctx.current = create2Dbuffer(ctx.current, (c.current as HTMLCanvasElement), w, h, false, null);
+            ctxImg.current = create2Dbuffer(ctxImg.current, (cImg.current as HTMLCanvasElement), w, h, true, i);
+            ctxEdge.current = create2Dbuffer(ctxEdge.current, (cEdge.current as HTMLCanvasElement), w, h, true, edge.current);
 
-            const colorData = ctxImg.current.getImageData(0, 0, w, h).data;
+            const colorData = (ctxImg.current as CanvasRenderingContext2D).getImageData(0, 0, w, h).data;
             pixels.current = colorData;
 
-            const edgeData = ctxEdge.current.getImageData(0, 0, w, h).data;
+            const edgeData = (ctxEdge.current as CanvasRenderingContext2D).getImageData(0, 0, w, h).data;
             edgePixels.current = edgeData;
        
             const boundry = new Rect(w/2, h/2, w/2, h/2);
@@ -112,8 +120,8 @@ export const Chickens1000 = () => {
 
             curves.current = [];
             dispatch(setCanvasSize([w, h]));
-            const tempSprites = await loadChickens(sprites.current, spriteJSON);
-            setAllSprites(tempSprites as any);
+            const tempSprites = await loadChickens((sprites.current as HTMLImageElement), spriteJSON);
+            setAllSprites(tempSprites);
             setReady(true);
         }
         
@@ -122,7 +130,7 @@ export const Chickens1000 = () => {
     
     //draw function
     function sketch(now: any) {
-        sketchId.current = requestAnimationFrame(sketch as any);
+        sketchId.current = requestAnimationFrame(sketch);
         const cx: any = ctx.current
         const cn: any = c.current;
         let distance = 200;
@@ -136,8 +144,8 @@ export const Chickens1000 = () => {
                 distance, 
                 thinMin, 
                 thinMax, 
-                ctxBuffers.current[i].current,
-                rcBuffers.current[i].current,
+                (ctxBuffers.current as RefObject<RenderingContext>[])[i].current,
+                (rcBuffers.current as RefObject<RoughCanvas>[])[i].current,
                 i
             );
 
@@ -160,7 +168,7 @@ export const Chickens1000 = () => {
         // let randY = Math.floor(Math.random()*h + h/7);
         let prevX = randX;
         let prevY = randY;
-        let prevArr: any = getRandomColor(prevX, prevY, w, pixels.current);
+        let prevArr: any = getRandomColor(prevX, prevY, w, (pixels.current as Uint8ClampedArray));
         let colorDist = 0;
         let thinningScale = 2;
         if (num < 5) distance = 300;
@@ -179,7 +187,7 @@ export const Chickens1000 = () => {
             let randY = Math.floor(Math.random()*h + h/6);
             // let randX = Math.floor(Math.random()*w/1.5 + w/7); //Adeeb
             // let randY = Math.floor(Math.random()*h + h/7);
-            let randArr: any = getRandomColor(randX, randY, w, pixels.current);
+            let randArr: any = getRandomColor(randX, randY, w, (pixels.current as Uint8ClampedArray));
             if (generate === "lines") colorDist = colorDistance(randArr[0], prevArr[0]);
 
             if (colorDist < 25) {
@@ -200,8 +208,8 @@ export const Chickens1000 = () => {
                             quadtree?.insert(m);
                         
                         
-                            if (generate === "chickens") drawChicken(randX, randY, size, size, ctx, randArr[0], prevArr[0], allSprites);
-                            else if (generate === "lines") curves.current.push([randX, randY]);
+                            if (generate === "chickens") drawChicken(randX, randY, size, size, ctx, randArr[0], prevArr[0], (allSprites as Sprites));
+                            else if (generate === "lines") (curves.current as number[][]).push([randX, randY]);
                             else if (generate === "circles") drawRoughCircle(randX, randY, size, rc, randArr[0], prevArr[0], num);
                             else if (generate === "cubes") drawRoughCube(randX, randY, size, rc, randArr[0], prevArr[0], num);
                             else if (generate === "pyramids") drawRoughPyramid(randX, randY, size, rc, randArr[0], prevArr[0], num);
@@ -217,12 +225,12 @@ export const Chickens1000 = () => {
             }
         }
 
-        if (curves.current.length) {
+        if ((curves.current as number[][]).length) {
             rc.curve(curves.current, {
                 stroke: `rgb(${prevArr[0][0]}, ${prevArr[0][1]}, ${prevArr[0][2]})`, strokeWidth: 6-num/2, roughness: Math.random()*(num+2)+1,
             });
     
-            curves.current.length = 0;
+            (curves.current as number[][]).length = 0;
         }
     
     }
@@ -232,7 +240,7 @@ export const Chickens1000 = () => {
         if (sketchReady) sketch(performance.now);
 
         return () => {
-            cancelAnimationFrame(sketchId.current);
+            cancelAnimationFrame(sketchId.current as number);
         }
     })
 

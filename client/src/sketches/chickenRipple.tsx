@@ -113,12 +113,11 @@ export const ChickenRipple = () => {
             let randY: number = Math.floor(Math.random()*(cRipple.current as HTMLCanvasElement).height);
 
         
-            let randArr: any = getRandomColor(randX, randY, (cRipple as any).current.width, (pixels.current as Uint8ClampedArray));
+            let randArr: (number[] | number)[] = getRandomColor(randX, randY, (cRipple.current as HTMLCanvasElement).width, (pixels.current as Uint8ClampedArray));
             let chkn = Math.floor(Math.random()*2);
     
             //lines and tinted are the same
-            let bitmap: any = spriteBitMap;
-            const tinted = tint(bitmap[chkn], randArr[0]);
+            const tinted = tint(spriteBitMap[chkn], (randArr[0] as number[]));
             (ctxChickens.current as CanvasRenderingContext2D).drawImage(tinted, randX, randY, 50, 50);
             if (mousePos) (ctxChickens.current as CanvasRenderingContext2D).drawImage(tinted, mousePos[0], mousePos[1], 20, 20);
         }
@@ -153,8 +152,8 @@ export const ChickenRipple = () => {
         addTexture((glSharpen.current as WebGL2RenderingContext), (glSharpen.current as WebGL2RenderingContext).TEXTURE0, (cContrast.current as HTMLCanvasElement), (sharpenResult.current as WebGLShader), 0, 'uiBackground');
         (glSharpen.current as WebGL2RenderingContext).drawArrays((glSharpen.current as WebGL2RenderingContext).TRIANGLE_STRIP, 0, 4); // Draw the quad
 
-        if (Math.floor(now/1000) % 5 === 0) (ctxChickens.current as CanvasRenderingContext2D).clearRect(0, 0, (cRipple as any).current.width, (cRipple as any).current.height);
-        if (isPressing) (ctxCurrent.current as CanvasRenderingContext2D).clearRect(0, 0, (cRipple as any).current.width, (cRipple as any).current.height);
+        if (Math.floor(now/1000) % 5 === 0) (ctxChickens.current as CanvasRenderingContext2D).clearRect(0, 0, (cRipple.current as HTMLCanvasElement).width, (cRipple.current as HTMLCanvasElement).height);
+        if (isPressing) (ctxCurrent.current as CanvasRenderingContext2D).clearRect(0, 0, (cRipple.current as HTMLCanvasElement).width, (cRipple.current as HTMLCanvasElement).height);
     }
 
 
@@ -179,7 +178,7 @@ export const ChickenRipple = () => {
             <Image src={portrait}  alt="Portrait of Hasib" className="hidden" ref={img} priority/>
             <Image src={spritesheet} alt="all sprites" className="hidden" ref={sprites} priority unoptimized/>
             <Image src={allchickenlines} alt="line sprites" className="hidden" ref={lines} priority unoptimized/>
-            <img src={domImage} alt="rasterized DOM" className="hidden" ref={dom} />
+            <img src={(domImage as string)} alt="rasterized DOM" className="hidden" ref={dom} />
         </React.Fragment>
     )
 }

@@ -9,6 +9,7 @@ import { create2Dbuffer } from "./methods/createbuffer"
 import { setCanvasSize } from "@/state/slices/canvasSlice";
 import { useDispatch } from "react-redux";
 import { Point, QuadTree, Rect } from "./methods/quadtree";
+import { Point as rPoint } from "roughjs/bin/geometry";
 import rough from "roughjs/bundled/rough.cjs.js";
 import { RoughCanvas } from "roughjs/bin/canvas";
 
@@ -42,7 +43,7 @@ export const Chickens1000 = () => {
     const qtree = useRef<QuadTree>();
     const pixels = useRef<Uint8ClampedArray | null>();
     const edgePixels = useRef<Uint8ClampedArray | null>();
-    const curves = useRef<number[][] | null>(null);
+    const curves = useRef<number[][] | rPoint[] | null>(null);
 
     //canvas and buffers
     const c = useRef<HTMLCanvasElement>(null);
@@ -131,8 +132,8 @@ export const Chickens1000 = () => {
     //draw function
     function sketch(now: any) {
         sketchId.current = requestAnimationFrame(sketch);
-        const cx: any = ctx.current
-        const cn: any = c.current;
+        const cx = (ctx.current as CanvasRenderingContext2D);
+        const cn = (c.current as HTMLCanvasElement);
         let distance = 200;
         let thinMin = 350;
         let thinMax = 310;
@@ -144,8 +145,8 @@ export const Chickens1000 = () => {
                 distance, 
                 thinMin, 
                 thinMax, 
-                (ctxBuffers.current as RefObject<RenderingContext>[])[i].current,
-                (rcBuffers.current as RefObject<RoughCanvas>[])[i].current,
+                ((ctxBuffers.current as RefObject<RenderingContext>[])[i].current as CanvasRenderingContext2D),
+                ((rcBuffers.current as RefObject<RoughCanvas>[])[i].current as RoughCanvas),
                 i
             );
 
@@ -154,23 +155,22 @@ export const Chickens1000 = () => {
         }
      
         for (let i = 0; i < 9; i++) {
-            cx.drawImage((cBuffers as any).current[i].current, 0, 0, cn.width, cn.height);
+            cx.drawImage(((cBuffers.current as RefObject<HTMLCanvasElement>[])[i].current as HTMLCanvasElement), 0, 0, cn.width, cn.height);
         } 
     }
 
-    function drawLayer(lowerLimit: number, upperLimit: number, distance: number, minSize: number, maxSize: number, ctx: any, rc: any, num: number) {
-        const cnvs: any = c.current;
-        const w: number = cnvs.width;
-        const h: number = cnvs.height;
-        let randX = Math.floor(Math.random()*w/2 + w/4); //Hasib
-        let randY = Math.floor(Math.random()*h + h/6);
+    function drawLayer(lowerLimit: number, upperLimit: number, distance: number, minSize: number, maxSize: number, ctx: CanvasRenderingContext2D, rc: RoughCanvas, num: number) {
+        const w: number = (c.current as HTMLCanvasElement).width;
+        const h: number = (c.current as HTMLCanvasElement).height;
+        let randX: number = Math.floor(Math.random()*w/2 + w/4); //Hasib
+        let randY: number = Math.floor(Math.random()*h + h/6);
         // let randX = Math.floor(Math.random()*w/1.5 + w/7); //Adeeb
         // let randY = Math.floor(Math.random()*h + h/7);
         let prevX = randX;
         let prevY = randY;
-        let prevArr: any = getRandomColor(prevX, prevY, w, (pixels.current as Uint8ClampedArray));
-        let colorDist = 0;
-        let thinningScale = 2;
+        let prevArr: (number[] | number)[]  = getRandomColor(prevX, prevY, w, (pixels.current as Uint8ClampedArray));
+        let colorDist: number = 0;
+        let thinningScale: number = 2;
         if (num < 5) distance = 300;
 
         let effects = ["circles", "lines", "chickens", "cubes", "pyramids", "stars", "hearts"];
@@ -183,20 +183,20 @@ export const Chickens1000 = () => {
         else generate = effects[index];
 
         for (let i = 0; i < 3000; i++) {
-            let randX = Math.floor(Math.random()*w/2 + w/4); //Hasib
-            let randY = Math.floor(Math.random()*h + h/6);
+            let randX: number = Math.floor(Math.random()*w/2 + w/4); //Hasib
+            let randY: number = Math.floor(Math.random()*h + h/6);
             // let randX = Math.floor(Math.random()*w/1.5 + w/7); //Adeeb
             // let randY = Math.floor(Math.random()*h + h/7);
-            let randArr: any = getRandomColor(randX, randY, w, (pixels.current as Uint8ClampedArray));
-            if (generate === "lines") colorDist = colorDistance(randArr[0], prevArr[0]);
+            let randArr: (number[] | number)[] = getRandomColor(randX, randY, w, (pixels.current as Uint8ClampedArray));
+            if (generate === "lines") colorDist = colorDistance((randArr[0] as number[]), (prevArr[0] as number[]));
 
             if (colorDist < 25) {
                 let dist = distanceRange(randX, randY, prevX, prevY)
-                let size = mapRange(randArr[1], 0, 255, minSize/4, maxSize/4);
+                let size = mapRange((randArr[1] as number), 0, 255, minSize/4, maxSize/4);
                 if (generate !== "chickens" && generate !== "lines") size = size/2.5;
               
 
-                if (((randArr[1] < upperLimit && randArr[1] > lowerLimit) && (prevArr[1] < upperLimit && prevArr[1] > lowerLimit))) {
+                if ((((randArr[1] as number) < upperLimit && (randArr[1] as number) > lowerLimit) && (prevArr[1] < upperLimit && prevArr[1] > lowerLimit))) {
                     if ((dist < distance)) {
                         const quadtree = qtree.current;
                         let thinAmount = size/thinningScale;
@@ -208,13 +208,13 @@ export const Chickens1000 = () => {
                             quadtree?.insert(m);
                         
                         
-                            if (generate === "chickens") drawChicken(randX, randY, size, size, ctx, randArr[0], prevArr[0], (allSprites as Sprites));
+                            if (generate === "chickens") drawChicken(randX, randY, size, size, ctx, (randArr[0] as number[]), (prevArr[0] as number[]), (allSprites as Sprites));
                             else if (generate === "lines") (curves.current as number[][]).push([randX, randY]);
-                            else if (generate === "circles") drawRoughCircle(randX, randY, size, rc, randArr[0], prevArr[0], num);
-                            else if (generate === "cubes") drawRoughCube(randX, randY, size, rc, randArr[0], prevArr[0], num);
-                            else if (generate === "pyramids") drawRoughPyramid(randX, randY, size, rc, randArr[0], prevArr[0], num);
-                            else if (generate === "stars") drawRoughStar(randX, randY, size, 10, 4, rc, randArr[0], num+2);
-                            else if (generate === "heart") drawRoughtHeart(randX, randY, size, rc, randArr[0], num+2);
+                            else if (generate === "circles") drawRoughCircle(randX, randY, size, rc, (randArr[0] as number[]), (prevArr[0] as number[]), num);
+                            else if (generate === "cubes") drawRoughCube(randX, randY, size, rc, (randArr[0] as number[]), (prevArr[0] as number[]), num);
+                            else if (generate === "pyramids") drawRoughPyramid(randX, randY, size, rc, (randArr[0] as number[]), (prevArr[0] as number[]), num);
+                            else if (generate === "stars") drawRoughStar(randX, randY, size, 10, 4, rc, (randArr[0] as number[]), num+2);
+                            else if (generate === "heart") drawRoughtHeart(randX, randY, size, rc, (randArr[0] as number[]), num+2);
 
                             prevX = randX;
                             prevY = randY;
@@ -226,8 +226,8 @@ export const Chickens1000 = () => {
         }
 
         if ((curves.current as number[][]).length) {
-            rc.curve(curves.current, {
-                stroke: `rgb(${prevArr[0][0]}, ${prevArr[0][1]}, ${prevArr[0][2]})`, strokeWidth: 6-num/2, roughness: Math.random()*(num+2)+1,
+            rc.curve((curves.current as rPoint[]), {
+                stroke: `rgb(${(prevArr[0] as number[])[0]}, ${(prevArr[0] as number[])[1]}, ${(prevArr[0] as number[])[2]})`, strokeWidth: 6-num/2, roughness: Math.random()*(num+2)+1,
             });
     
             (curves.current as number[][]).length = 0;

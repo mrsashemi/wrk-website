@@ -132,12 +132,12 @@ export const tileFragment: string = `
       quadColorVariance = constructQuadTree(center, quadTileSize);
         
       // if the variance is lower than the varianceThreshold, current quad is outputted (divide == 0)
-        float divide = when_lt(varianceThreshold, quadColorVariance);
+      float divide = when_lt(varianceThreshold, quadColorVariance);
 
-        // otherwise we divide again (divide == 1)
-        divs+=divs*divide;
-        center+=(((floor(uv*divs)+0.5)/divs)-center)*divide;
-        quadTileSize+=(-0.5*quadTileSize)*divide;
+      // otherwise we divide again (divide == 1)
+      divs+=divs*divide;
+      center+=(((floor(uv*divs)+0.5)/divs)-center)*divide;
+      quadTileSize+=(-0.5*quadTileSize)*divide;
     }
     
     // the coordinates of the quad

@@ -4,7 +4,7 @@ import { RootState } from '../store/store';
 interface CanvasState {
     domImage: string | null;
     mousePos: number[] | null;
-    canvasSize: number | null;
+    canvasSize: number[] | null;
     hoveringElem: boolean;
     invert: boolean;
     pressing: boolean;

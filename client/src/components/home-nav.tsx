@@ -11,6 +11,34 @@ interface HomeProps {
   opaq: boolean 
 }
 
+interface MainContainer {
+  [index: string]: string;
+}
+
+interface NavContainer {
+  [index: string]: string;
+}
+
+interface NavLinks {
+  [index: string]: string;
+}
+
+interface TitleContainer {
+  [index: string]: string;
+}
+
+interface Title {
+  [index: string]: string;
+}
+
+interface Styles {
+  mainContainer: MainContainer;
+  navContainer: NavContainer;
+  navLinks: NavLinks;
+  titleContainer: TitleContainer;
+  title: Title;
+}
+
 export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttributes<HTMLDivElement>> = React.forwardRef((props, ref) => {
   const homeNav = useSelector(getHomeNavContainer);
   const homeNavLinks = useSelector(getHomeNavLinks);
@@ -23,15 +51,15 @@ export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttri
 
   function findMousePos(e: any) {
     let rect = e.target.getBoundingClientRect();
-    let scaleX = canvasSize[0]/rect.width;
-    let scaleY = canvasSize[1]/rect.height;
+    let scaleX = (canvasSize as number[])[0]/rect.width;
+    let scaleY = (canvasSize as number[])[1]/rect.height;
   
     dispatch(setMousePos([(e.clientX - rect.left)*scaleX, (e.clientY - rect.top)*scaleY]));
   }
 
 
 
-  const styles: any = {
+  const styles: Styles = {
     mainContainer: { // no changes
       width: '100vw', 
       height: '100vh', 

@@ -7,23 +7,15 @@ interface Setting {
 }
 
 interface HomeNavContainer {
-    margin: string;
-    flexDirection: string;
-    alignItems: string;
-    justifyContent: string;
-    gap: string
+    [index: string]: string;
 }
 
 interface HomeNavLinks {
-    fontSize: string;
-    lineHeight: string;
+    [index: string]: string;
 }
 
 interface HomeTitle {
-    fontSize: string;
-    lineHeight: string;
-    marginRight: string;
-    marginBottom: string;
+    [index: string]: string;
 }
 
 interface PageState {

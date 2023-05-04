@@ -58,7 +58,6 @@ export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttri
   }
 
 
-
   const styles: Styles = {
     mainContainer: { // no changes
       width: '100vw', 

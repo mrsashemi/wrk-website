@@ -100,6 +100,8 @@ export const ChickenRipple = () => {
             setSprites(tempSprites.lines);
             dispatch(setCanvasSize([w, h]));
             setReady(true);
+
+            console.log(spriteBitMap);
         }
         initSketch();
     }, [])

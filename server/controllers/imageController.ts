@@ -9,9 +9,9 @@ interface MulterRequest extends Request {
     file: any;
 }
 
-async function processAndUploadImage(file: any, buffer: any, resolutions: any, type: any) {
+// worker function that processes image into various sizes and into webp format prior to upload to s3
+async function processAndUploadImage(file: any, buffer: any, resolutions: any, type: any, name: any) {
     let result = [];
-    let name = path.parse(file.originalname).name
 
     try {
         // get metadata and check the orientation in order to determine the appropriate size
@@ -69,24 +69,41 @@ async function processAndUploadImage(file: any, buffer: any, resolutions: any, t
 exports.saveImg = async (req: Request, res: Response): Promise<any> => {
     const resolutions = [
         {name: "1536", res: 1536},
+        {name: "1280", res: 1280},
+        {name: "1024", res: 1024},
+        {name: "768", res: 768},
+        {name: "640", res: 640},
         {name: "320", res: 320}
     ]
 
     try {
         const file = (req as MulterRequest).file;
-        const images: any = await processAndUploadImage(file, file.buffer, resolutions, "original");
+        let name = path.parse(file.originalname).name
+
+        const images: any = await processAndUploadImage(file, file.buffer, resolutions, "original", name);
     
         let collection = (await db as Db).collection("originals");
         let img = {
             type: "originals",
-            original: images[0].Location,
-            thumbnail: images[1].Location,
-            keys: {original: images[0].Key, thumbnail: images[1].Key},
+            resolutions: {
+                res_1536: {url: images[0].Location, key: images[0].Key},
+                res_1280: {url: images[1].Location, key: images[1].Key},
+                res_1024: {url: images[2].Location, key: images[2].Key},
+                res_768: {url: images[3].Location, key: images[3].Key},
+                res_640: {url: images[4].Location, key: images[4].Key},
+                res_320: {url: images[5].Location, key: images[5].Key},
+            },
+            name: name,
             date: new Date(),
         };
     
         let result = await collection.insertOne(img);
-        if (result) res.send(result).status(200);
+
+        if (result) {
+            (result as any).img = img
+
+            res.send(result).status(200);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({
@@ -96,27 +113,16 @@ exports.saveImg = async (req: Request, res: Response): Promise<any> => {
 }
 
 exports.saveArtwork = async (req: Request, res: Response): Promise<any> => {
-    const resolutions = [
-        {name: "1280", res: 1280},
-        {name: "1024", res: 1024},
-        {name: "768", res: 768},
-        {name: "640", res: 640}
-    ]
-
     try {
-        const file = (req as MulterRequest).file;
-        const images: any = await processAndUploadImage(file, file.buffer, resolutions, "original");
-        let collection = (await db as Db).collection("artworks");
         let img = req.body;
-    
-        img.primary.res_640 = {url: images[3].Location, name: images[3].Key, res: 640}
-        img.primary.res_768 = {url: images[2].Location, name: images[2].Key, res: 768 }
-        img.primary.res_1024 = {url: images[1].Location, name: images[1].Key, res: 1024}
-        img.primary.res_1280 = {url: images[0].Location, name: images[0].Key, res: 1280}
+        let collection = (await db as Db).collection("artworks");
         img.date = new Date();
-    
         let result = await collection.insertOne(img);
-        if (result) res.send(result).status(200);
+
+        if (result) {
+            (result as any).img = img
+            res.send(result).status(200);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({
@@ -127,88 +133,63 @@ exports.saveArtwork = async (req: Request, res: Response): Promise<any> => {
 
 exports.savePhoto = async (req: Request, res: Response): Promise<any> => {
     const resolutions = [
+        {name: "1536", res: 1536},
         {name: "1280", res: 1280},
         {name: "1024", res: 1024},
         {name: "768", res: 768},
-        {name: "640", res: 640}
+        {name: "640", res: 640},
+        {name: "320", res: 320}
     ]
-  
+
     try {
         let img = req.body;
-        if (img.edited) {
-            resolutions.unshift({name: "1536", res: 1536})
-            resolutions.push({name: "320", res: 320})
-        } 
-
+        let images: any;
         const file = (req as MulterRequest).file;
-        const images: any = await processAndUploadImage(file, file.buffer, resolutions, (img.edited) ? "edit" : "original");
-        let collection = (await db as Db).collection("photographs");
 
-        img.resolutions.res_640 = {url: images[(img.edited) ? 4 : 3].Location, name: images[3].Key, res: 640}
-        img.resolutions.res_768 = {url: images[(img.edited) ? 3 : 2].Location, name: images[2].Key, res: 768 }
-        img.resolutions.res_1024 = {url: images[(img.edited) ? 2 : 1].Location, name: images[1].Key, res: 1024}
-        img.resolutions.res_1280 = {url: images[(img.edited) ? 1 : 0].Location, name: images[0].Key, res: 1280}
-        if (img.edited) {
-            img.resolutions.res_320 = {url: images[5].Location, name: images[5].Key, res: 320}
-            img.resolutions.res_1536 = {url: images[0].Location, name: images[0].Key, res: 1536}
+        if (file) {
+            images = await processAndUploadImage(file, file.buffer, resolutions, "edit", img.name);
+            img.resolutions = {
+                res_1536: {url: images[0].Location, key: images[0].Key},
+                res_1280: {url: images[1].Location, key: images[1].Key},
+                res_1024: {url: images[2].Location, key: images[2].Key},
+                res_768: {url: images[3].Location, key: images[3].Key},
+                res_640: {url: images[4].Location, key: images[4].Key},
+                res_320: {url: images[5].Location, key: images[5].Key},
+            }
         }
-
         img.date = new Date();
-    
+
+        let collection = (await db as Db).collection("photographs");
         let result = await collection.insertOne(img);
-        if (result) res.send(result).status(200);
+
+        if (result) {
+            (result as any).img = img
+            res.send(result).status(200);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({
-            error: "Database error while creating new artwork"
+            error: "Database error while creating new photo"
         })
     }
 }
 
 exports.saveSketch = async (req: Request, res: Response): Promise<any> => {
     const resolutions = [
-        {name: "full", res: 1536},
-        {name: "thumbnail", res: 320}
+        {name: "1536", res: 1536},
+        {name: "1280", res: 1280},
+        {name: "1024", res: 1024},
+        {name: "768", res: 768},
+        {name: "640", res: 640},
+        {name: "320", res: 320}
     ]
 
-    const file = (req as MulterRequest).file;
-    const images: any = processAndUploadImage(file, file.buffer, resolutions, "original");
+    try {
+        let img = req.body;
+        const file = (req as MulterRequest).file;
+        const images: any = await processAndUploadImage(file, file.buffer, resolutions, "sketch", img.name);
+        let collection = (await db as Db).collection("sketches");
 
-    let collection = (await db as Db).collection("sketches");
-    let img = req.body;
-
-    img.resolutions = {
-        res_320: {url: images[5].Location, name: images[5].Key},
-        res_640: {url: images[4].Location, name: images[4].Key},
-        res_768: {url: images[3].Location, name: images[3].Key},
-        res_1024: {url: images[2].Location, name: images[2].Key},
-        res_1280: {url: images[1].Location, name: images[1].Key},
-        res_1536: {url: images[0].Location, name: images[0].Key},
-    }
-    img.date = new Date();
-
-    let result = await collection.insertOne(img);
-    res.send(result).status(204);
-}
-
-exports.saveSprites = async (req: Request, res: Response): Promise<any> => {
-    const resolutions = [
-        {name: "full", res: 1536},
-        {name: "thumbnail", res: 320}
-    ]
-    const file = (req as MulterRequest).file;
-    let type = req.body.type;
-
-    const images: any = processAndUploadImage(file, file.buffer, resolutions, "original");
-
-    let collection = (await db as Db).collection(type);
-    let img = req.body;
-
-    if (type === "originals") {
-        img.original = images[0].Location;
-        img.thumbnail = images[1].Location;
-        img.keys = {original: images[0].Key, thumbnail: images[1].Key}
-    } else {
         img.resolutions = {
             res_320: {url: images[5].Location, name: images[5].Key},
             res_640: {url: images[4].Location, name: images[4].Key},
@@ -217,54 +198,110 @@ exports.saveSprites = async (req: Request, res: Response): Promise<any> => {
             res_1280: {url: images[1].Location, name: images[1].Key},
             res_1536: {url: images[0].Location, name: images[0].Key},
         }
+        img.date = new Date();
+        let result = await collection.insertOne(img);
+
+        if (result) {
+            (result as any).img = img
+            res.send(result).status(200);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Database error while creating new sketch"
+        })
     }
-
-    img.date = new Date();
-
-    let result = await collection.insertOne(img);
-    res.send(result).status(204);
 }
 
-
+exports.saveSprites = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const file = (req as MulterRequest).file;
+        let img = req.body;
+        let s3result = await uploadFile(file, "sprites_"+img.element+"_"+file.originalname);
+        img.sprites = {url: s3result.Location, name: s3result.Key}
+        img.date = new Date();
+    
+        let collection = (await db as Db).collection("sprites");
+        let result = await collection.insertOne(img);
+    
+        if (result) {
+            (result as any).img = img
+            res.send(result).status(200);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Database error while creating new sprites"
+        })
+    }
+}
 
 // read all images 
 exports.readAllImgs = async (req: Request, res: Response): Promise<any> => {
-    let type = req.body.type;
-    let collection = (await db as Db).collection(type);
-    let results = await collection.find({}).toArray();
-  
-    res.send(results).status(200);
+    try {
+        let type = req.params.type;
+        let collection = (await db as Db).collection(type);
+        let results = await collection.find({}).toArray();
+
+        if (results) res.send(results).status(200); 
+        else res.send("Not found").status(404);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Database error while retrieving images"
+        })
+    }
 }
 
 // read one image 
 exports.readOneImg = async (req: Request, res: Response): Promise<any> => {
-    let type = req.body.type;
-    let collection = (await db as Db).collection(type);
-    let query = {_id: new ObjectId(req.params.id)};
-    let result = await collection.findOne(query);
-  
-    if (!result) res.send("Not found").status(404);
-    else res.send(result).status(200);
+    try {
+        console.log(req.params.id);
+
+        let type = req.params.type;
+        let collection = (await db as Db).collection(type);
+        let query = {_id: new ObjectId(req.params.id)};
+        let result = await collection.findOne(query);
+
+        if (!result) res.send("Not found").status(404);
+        else res.send(result).status(200);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Database error while retrieving image"
+        })
+    }  
 }
 
 // update one image 
 exports.updateOneImg = async (req: Request, res: Response): Promise<any> => {
+  try {
     let type = req.body.type;
     let collection = (await db as Db).collection(type);
-    let updates: any;
-
     let query = {_id: new ObjectId(req.params.id)};
-    let result = await collection.updateOne(query, updates);
+    let updates = [{$set: req.body}]
+    let result = await collection.updateOne(query, updates, {upsert: false});
     
-    res.send(result).status(200);
+    if (!result) res.send("Not found").status(404);
+    else res.send(result).status(200);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+        error: "Database error while retrieving image"
+    })
+  }
 }
 
 // delete one image 
 exports.deleteOneImg = async (req: Request, res: Response): Promise<any> => {
-    let type = req.body.type;
-    let collection = (await db as Db).collection(type);
-    let query = {_id: new ObjectId(req.params.id)};
-    let result = await collection.deleteOne(query);
-    
-    res.send(result).status(200);
+    try {
+        let type = req.params.type;
+        let collection = (await db as Db).collection(type);
+        let query = {_id: new ObjectId(req.params.id)};
+        let result = await collection.deleteOne(query);
+        
+        res.send(result).status(200); 
+    } catch (error) {
+        
+    }
 }

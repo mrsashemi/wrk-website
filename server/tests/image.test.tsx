@@ -14,6 +14,7 @@ describe('Backend Requests', () => {
     let all: any;
     let one: any;
     let update: any;
+    let deletes: any = {};
 
     it('Processes image into various resolutions, Uploads it to S3 and creates a new entry in original images metadata table', async () => {
         const img = path.resolve(__dirname, `./assets/hasibwide.JPG`);
@@ -32,23 +33,9 @@ describe('Backend Requests', () => {
             title: "Artwork Test",
             artists: ["Hasib Hashemi"],
             type: "artworks",
-            resolutions: {
-                res_320: res._body.img.resolutions.res_320,
-                res_640: res._body.img.resolutions.res_640,
-                res_768: res._body.img.resolutions.res_768,
-                res_1024: res._body.img.resolutions.res_1024,
-                res_1280: res._body.img.resolutions.res_1280,
-                res_1536: res._body.img.resolutions.res_1536,
-            }, 
+            resolutions: res._body.img.resolutions, 
             details: [
-                {
-                    res_320: res._body.img.resolutions.res_320,
-                    res_640: res._body.img.resolutions.res_640,
-                    res_768: res._body.img.resolutions.res_768,
-                    res_1024: res._body.img.resolutions.res_1024,
-                    res_1280: res._body.img.resolutions.res_1280,
-                    res_1536: res._body.img.resolutions.res_1536,
-                },
+                res._body.img.resolutions,
             ],
             name: res._body.img.name
         }
@@ -67,14 +54,7 @@ describe('Backend Requests', () => {
             title: "Photo Test",
             photographers: ["Hasib Hashemi"],
             type: "photographs",
-            resolutions: {
-                res_320: res._body.img.resolutions.res_320,
-                res_640: res._body.img.resolutions.res_640,
-                res_768: res._body.img.resolutions.res_768,
-                res_1024: res._body.img.resolutions.res_1024,
-                res_1280: res._body.img.resolutions.res_1280,
-                res_1536: res._body.img.resolutions.res_1536,
-            }, 
+            resolutions: res._body.img.resolutions, 
             name: res._body.img.name
         }
 
@@ -93,14 +73,7 @@ describe('Backend Requests', () => {
             title: "Photo Test",
             photographers: ["Hasib Hashemi"],
             type: "photographs",
-            resolutions: {
-                res_320: res._body.img.resolutions.res_320,
-                res_640: res._body.img.resolutions.res_640,
-                res_768: res._body.img.resolutions.res_768,
-                res_1024: res._body.img.resolutions.res_1024,
-                res_1280: res._body.img.resolutions.res_1280,
-                res_1536: res._body.img.resolutions.res_1536,
-            }, 
+            resolutions: res._body.img.resolutions, 
             name: res._body.img.name
         }
 
@@ -111,7 +84,7 @@ describe('Backend Requests', () => {
             .field("photographers", 'Hasib Hashemi')
             .field("type", "photographs")
             .field('details', JSON.stringify(img.resolutions))
-            .field('name', JSON.stringify(img.name))
+            .field('name', img.name)
             .attach('image', edit)
             .expect(200)
 
@@ -125,14 +98,7 @@ describe('Backend Requests', () => {
             title: "Sketch Test",
             photographers: ["Hasib Hashemi"],
             type: "photographs",
-            resolutions: {
-                res_320: res._body.img.resolutions.res_320,
-                res_640: res._body.img.resolutions.res_640,
-                res_768: res._body.img.resolutions.res_768,
-                res_1024: res._body.img.resolutions.res_1024,
-                res_1280: res._body.img.resolutions.res_1280,
-                res_1536: res._body.img.resolutions.res_1536,
-            }, 
+            resolutions: res._body.img.resolutions, 
             name: res._body.img.name
         }
 
@@ -143,7 +109,7 @@ describe('Backend Requests', () => {
             .field("programmers", 'Hasib Hashemi')
             .field("type", "sketches")
             .field('source', JSON.stringify(img.resolutions))
-            .field('name', JSON.stringify(img.name))
+            .field('name', img.name)
             .attach('image', edit)
             .expect(200)
 
@@ -168,16 +134,22 @@ describe('Backend Requests', () => {
 
     it('Retrieves all images', async () => {
         all = await request(app)
-            .get('/img/all-images')
-            .send({type: 'originals'})
+            .get('/img/all-images/originals')
             .expect(200)
 
         return all
     })
 
     it('Retrieves a single image', async () => {
+        let artwork = {
+            id: art._body.img._id,
+            type: 'artworks'
+        }
+
+        let urlParam = encodeURIComponent(JSON.stringify(artwork))
+
         one = await request(app)
-            .get(`/img/single-image/${art._body.img._id}`)
+            .get(`/img/single-image/${urlParam}`)
             .send({type: "artworks"})
             .expect(200)
 
@@ -185,12 +157,83 @@ describe('Backend Requests', () => {
     })
 
     it('Can update a single image', async () => {
+        let artwork = {
+            id: art._body.img._id,
+            type: 'artworks'
+        }
+
+        let urlParam = encodeURIComponent(JSON.stringify(artwork))
+
         update = await request(app)
-            .patch(`/img/update-image/${art._body.img._id}`)
-            .send({type: "artworks", description: "updated description test"})
+            .patch(`/img/update-image/${urlParam}`)
+            .send({description: "updated description test"})
             .expect(200)
 
         return update
+    })
+
+    it('Can delete metadata and s3 objects', async () => {
+        let originals = {
+            id: res._body.img._id,
+            type: 'originals',
+            toDelete: res._body.img.resolutions
+        }
+
+        deletes.og = await request(app)
+            .delete(`/img/delete-image/${encodeURIComponent(JSON.stringify(originals))}`)
+            .expect(200)
+
+        let artwork = {
+            id: art._body.img._id,
+            type: 'artworks'
+        }
+
+        deletes.arts = await request(app)
+            .delete(`/img/delete-image/${encodeURIComponent(JSON.stringify(artwork))}`)
+            .expect(200)
+
+        let ogPhoto = {
+            id: photoOg._body.img._id,
+            type: 'photographs'
+        }
+
+        deletes.ogPic = await request(app)
+            .delete(`/img/delete-image/${encodeURIComponent(JSON.stringify(ogPhoto))}`)
+            .expect(200)
+
+        let editPhoto = {
+            id: photoEdit._body.img._id,
+            type: 'photographs',
+            toDelete: photoEdit._body.img.resolutions
+        }
+
+        deletes.editPic = await request(app)
+            .delete(`/img/delete-image/${encodeURIComponent(JSON.stringify(editPhoto))}`)
+            .expect(200)
+
+        let generative = {
+            id: sketch._body.img._id,
+            type: 'sketches',
+            toDelete: sketch._body.img.resolutions
+        }
+
+        deletes.genSketch = await request(app)
+            .delete(`/img/delete-image/${encodeURIComponent(JSON.stringify(generative))}`)
+            .expect(200)
+
+        let spritesheet = {
+            id: sprite._body.img._id,
+            type: 'sprites',
+            toDelete: {
+                sprites: sprite._body.img.sprites
+            }
+        }
+
+        deletes.sheet = await request(app)
+            .delete(`/img/delete-image/${encodeURIComponent(JSON.stringify(spritesheet))}`)
+            .expect(200)
+        
+        return deletes
     })
 
 

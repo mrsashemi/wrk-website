@@ -191,12 +191,12 @@ exports.saveSketch = async (req: Request, res: Response): Promise<any> => {
         let collection = (await db as Db).collection("sketches");
 
         img.resolutions = {
-            res_320: {url: images[5].Location, name: images[5].Key},
-            res_640: {url: images[4].Location, name: images[4].Key},
-            res_768: {url: images[3].Location, name: images[3].Key},
-            res_1024: {url: images[2].Location, name: images[2].Key},
-            res_1280: {url: images[1].Location, name: images[1].Key},
-            res_1536: {url: images[0].Location, name: images[0].Key},
+            res_320: {url: images[5].Location, key: images[5].Key},
+            res_640: {url: images[4].Location, key: images[4].Key},
+            res_768: {url: images[3].Location, key: images[3].Key},
+            res_1024: {url: images[2].Location, key: images[2].Key},
+            res_1280: {url: images[1].Location, key: images[1].Key},
+            res_1536: {url: images[0].Location, key: images[0].Key},
         }
         img.date = new Date();
         let result = await collection.insertOne(img);
@@ -218,7 +218,7 @@ exports.saveSprites = async (req: Request, res: Response): Promise<any> => {
         const file = (req as MulterRequest).file;
         let img = req.body;
         let s3result = await uploadFile(file, "sprites_"+img.element+"_"+file.originalname);
-        img.sprites = {url: s3result.Location, name: s3result.Key}
+        img.sprites = {url: s3result.Location, key: s3result.Key}
         img.date = new Date();
     
         let collection = (await db as Db).collection("sprites");
@@ -256,11 +256,9 @@ exports.readAllImgs = async (req: Request, res: Response): Promise<any> => {
 // read one image 
 exports.readOneImg = async (req: Request, res: Response): Promise<any> => {
     try {
-        console.log(req.params.id);
-
-        let type = req.params.type;
-        let collection = (await db as Db).collection(type);
-        let query = {_id: new ObjectId(req.params.id)};
+        let img = JSON.parse(decodeURIComponent(req.params.img))
+        let collection = (await db as Db).collection(img.type);
+        let query = {_id: new ObjectId(img.id)};
         let result = await collection.findOne(query);
 
         if (!result) res.send("Not found").status(404);
@@ -276,9 +274,9 @@ exports.readOneImg = async (req: Request, res: Response): Promise<any> => {
 // update one image 
 exports.updateOneImg = async (req: Request, res: Response): Promise<any> => {
   try {
-    let type = req.body.type;
-    let collection = (await db as Db).collection(type);
-    let query = {_id: new ObjectId(req.params.id)};
+    let img = JSON.parse(decodeURIComponent(req.params.img))
+    let collection = (await db as Db).collection(img.type);
+    let query = {_id: new ObjectId(img.id)};
     let updates = [{$set: req.body}]
     let result = await collection.updateOne(query, updates, {upsert: false});
     
@@ -295,13 +293,29 @@ exports.updateOneImg = async (req: Request, res: Response): Promise<any> => {
 // delete one image 
 exports.deleteOneImg = async (req: Request, res: Response): Promise<any> => {
     try {
-        let type = req.params.type;
-        let collection = (await db as Db).collection(type);
-        let query = {_id: new ObjectId(req.params.id)};
+        let img = JSON.parse(decodeURIComponent(req.params.img))
+        let collection = (await db as Db).collection(img.type);
+        let query = {_id: new ObjectId(img.id)};
         let result = await collection.deleteOne(query);
+
+
+        if (result) {
+            if (img.type == "sprites") console.log(img.toDelete)
+            if (img.toDelete) {
+                for (const s3img in img.toDelete) {
+                    await deleteFileFromS3(img.toDelete[s3img].key)
+                }
+            }
+
+            res.send(result).status(200); 
+        } else {
+            res.send("Not found").status(404);
+        }
         
-        res.send(result).status(200); 
     } catch (error) {
-        
+        console.log(error);
+        res.status(500).json({
+            error: "Database error while retrieving image"
+        })
     }
 }

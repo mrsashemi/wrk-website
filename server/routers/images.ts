@@ -32,6 +32,7 @@ router.post('/save-sprites', upload.single('image'), saveSprites);
 // get requests
 router.get('/all-images/:type', readAllImgs)
 router.get('/single-image/:img', readOneImg)
+router.get('/image/:key')
 
 // patch requests
 router.patch('/update-image/:img', updateOneImg)

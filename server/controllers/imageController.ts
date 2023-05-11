@@ -5,16 +5,30 @@ const { uploadFile, getFileStream, deleteFileFromS3 } = require('../databases/s3
 import sharp, { Metadata } from 'sharp';
 import path from 'path';
 
+interface multerFile {
+    buffer: Buffer, 
+    encoding: string, 
+    fieldname: string, 
+    mimetype: string, 
+    originalname: string, 
+    size: number;
+};
+
 interface MulterRequest extends Request {
-    file: any;
+    file: multerFile;
+}
+
+interface ResArray {
+    name: string,
+    res: number
 }
 
 // worker function that processes image into various sizes and into webp format prior to upload to s3
-async function processAndUploadImage(file: any, buffer: any, resolutions: any, type: any, name: any) {
+async function processAndUploadImage(file: multerFile, buffer: Buffer, resolutions: ResArray[], type: string, name: string) {
     let result = [];
 
     try {
-        // get metadata and check the orientation in order to determine the appropriate size
+        // get metadata and ck the orientation in order to determine the appropriate size
         const metadata: Metadata = await sharp(file.buffer).metadata();
         let landscape: boolean = true;
         let ratio: number;
@@ -67,7 +81,7 @@ async function processAndUploadImage(file: any, buffer: any, resolutions: any, t
 
 // save original image to S3 bucket and originals collection in mongodb
 exports.saveImg = async (req: Request, res: Response): Promise<any> => {
-    const resolutions = [
+    const resolutions: ResArray[] = [
         {name: "1536", res: 1536},
         {name: "1280", res: 1280},
         {name: "1024", res: 1024},
@@ -132,7 +146,7 @@ exports.saveArtwork = async (req: Request, res: Response): Promise<any> => {
 }
 
 exports.savePhoto = async (req: Request, res: Response): Promise<any> => {
-    const resolutions = [
+    const resolutions: ResArray[] = [
         {name: "1536", res: 1536},
         {name: "1280", res: 1280},
         {name: "1024", res: 1024},
@@ -175,7 +189,7 @@ exports.savePhoto = async (req: Request, res: Response): Promise<any> => {
 }
 
 exports.saveSketch = async (req: Request, res: Response): Promise<any> => {
-    const resolutions = [
+    const resolutions: ResArray[] = [
         {name: "1536", res: 1536},
         {name: "1280", res: 1280},
         {name: "1024", res: 1024},
@@ -236,7 +250,7 @@ exports.saveSprites = async (req: Request, res: Response): Promise<any> => {
     }
 }
 
-// read all images 
+// read all images metadata
 exports.readAllImgs = async (req: Request, res: Response): Promise<any> => {
     try {
         let type = req.params.type;
@@ -253,7 +267,7 @@ exports.readAllImgs = async (req: Request, res: Response): Promise<any> => {
     }
 }
 
-// read one image 
+// read one image metadata
 exports.readOneImg = async (req: Request, res: Response): Promise<any> => {
     try {
         let img = JSON.parse(decodeURIComponent(req.params.img))
@@ -263,6 +277,21 @@ exports.readOneImg = async (req: Request, res: Response): Promise<any> => {
 
         if (!result) res.send("Not found").status(404);
         else res.send(result).status(200);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            error: "Database error while retrieving image"
+        })
+    }  
+}
+
+// read image data from s3
+exports.readFromS3 = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const key = req.params.key;
+        const readStream = getFileStream(key)
+
+        readStream.pipe(res);
     } catch (error) {
         console.log(error);
         res.status(500).json({
@@ -300,7 +329,6 @@ exports.deleteOneImg = async (req: Request, res: Response): Promise<any> => {
 
 
         if (result) {
-            if (img.type == "sprites") console.log(img.toDelete)
             if (img.toDelete) {
                 for (const s3img in img.toDelete) {
                     await deleteFileFromS3(img.toDelete[s3img].key)

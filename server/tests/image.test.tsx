@@ -3,6 +3,8 @@ const request = require('supertest');
 const app = require('../server');
 const spriteJSON = require('./assets/spritesheet.json')
 
+
+//This test will upload content to s3 and the collections in mongodb, read them, update them, and delete them from both s3 and mongodb
 describe('Backend Requests', () => {
     jest.setTimeout(60000)
     let res: any;

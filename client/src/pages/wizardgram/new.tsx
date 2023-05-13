@@ -1,8 +1,39 @@
 import Canvas from "@/components/wizardgram/canvas";
 import { useWindowSize } from "@/hooks/useWindowSize";
+import { useSaveMediaMutation } from "@/state/slices/mediaSlice";
+import { useRef } from "react";
+
 
 function NewPost() {
     const windowSize = useWindowSize();
+    const hiddenFileInput = useRef(null);
+    const [addMedia] = useSaveMediaMutation();
+
+    const handleClick = (e: any) => {
+        (hiddenFileInput.current as any).click();
+    }
+
+    const handleChange = (e: any) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("image", e.target.files[0]);
+
+        const createImg = async () => {
+            try {
+                const result = await addMedia(formData);
+                if (result) {
+                    console.log(result);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        createImg();
+    }
+
+
+
 
     return (
         <div className="flex flex-col w-screen h-screen xs:text-sm sm:text-base md:text-lg lg:text-2xl" style={{width: `calc(${windowSize[0]*0.01}px*100)`, height: `calc(${windowSize[1]*0.01}px*100)`}}>
@@ -26,8 +57,8 @@ function NewPost() {
                 display2D={"block"}
                 displayWEBGL={"hidden"}  />
             <div className="flex justify-between items-center border-y-2">
-                <button className="px-1 border-r-2 sm:p-2 md:px-3 lg:p-3 lg:px-4 xs:text-base sm:text-lg md:text-xl lg:text-3xl">Select File</button>
-                <input type="file" className="hidden"/>
+                <button onClick={handleClick} className="px-1 border-r-2 sm:p-2 md:px-3 lg:p-3 lg:px-4 xs:text-base sm:text-lg md:text-xl lg:text-3xl">Select File</button>
+                <input type="file" ref={hiddenFileInput} onChange={handleChange} className="hidden"/>
             </div>
             <div className="flex flex-col m-1">
                 <div className="grid">

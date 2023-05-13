@@ -1,19 +1,21 @@
 import Canvas from "@/components/wizardgram/canvas";
 import { useWindowSize } from "@/hooks/useWindowSize";
-import { useSaveMediaMutation } from "@/state/slices/mediaSlice";
-import { useRef } from "react";
+import { useReadAllMediaQuery, useSaveMediaMutation } from "@/state/slices/mediaSlice";
+import Image from "next/image";
+import { useEffect, useRef } from "react";
 
 
 function NewPost() {
     const windowSize = useWindowSize();
     const hiddenFileInput = useRef(null);
     const [addMedia] = useSaveMediaMutation();
+    const allMedia = useReadAllMediaQuery('originals');
 
     const handleClick = (e: any) => {
         (hiddenFileInput.current as any).click();
     }
 
-    const handleChange = (e: any) => {
+    const handleChange = (e: any) => {  
         e.preventDefault();
         const formData = new FormData();
         formData.append("image", e.target.files[0]);
@@ -32,6 +34,9 @@ function NewPost() {
         createImg();
     }
 
+    useEffect(() => {
+        console.log(allMedia)
+    }, [allMedia])
 
 
 
@@ -62,6 +67,12 @@ function NewPost() {
             </div>
             <div className="flex flex-col m-1">
                 <div className="grid">
+                    {allMedia.isSuccess && allMedia.currentData.map((img: any) =>
+                        <div key={img._id}>
+                            <img src={`http://localhost:5050/img/image/${img.resolutions.res_320.key}`} alt={img.name} />
+                        </div>
+                    
+                    )}
                 </div>
             </div>
         </div>

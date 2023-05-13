@@ -9,10 +9,3 @@ export const apiSlice = createApi({
     tagTypes: ['Posts', 'Images'],
     endpoints: builder => ({})
 })
-
-// prepareHeaders: (headers) => {
-//     if (!headers.has("Content-Type")) {
-//         headers.set("Content-Type", "application/json");
-//     }
-//     return headers
-// }

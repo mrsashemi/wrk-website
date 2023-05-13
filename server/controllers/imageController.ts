@@ -291,7 +291,7 @@ exports.readFromS3 = async (req: Request, res: Response): Promise<any> => {
         const key = req.params.key;
         const readStream = getFileStream(key)
 
-        readStream.pipe(res);
+        return readStream.pipe(res);
     } catch (error) {
         console.log(error);
         res.status(500).json({

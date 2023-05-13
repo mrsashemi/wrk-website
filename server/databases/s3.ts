@@ -27,6 +27,7 @@ exports.uploadFile = uploadFile
 
 // downlaods a file from s3
 function getFileStream(fileKey: string) {
+
     const downloadParams = {
         Key: fileKey,
         Bucket: process.env.AWS_BUCKET_NAME,   

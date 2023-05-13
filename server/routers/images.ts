@@ -1,6 +1,6 @@
 import express, { Router, Request, Response } from "express";
 const multer = require('multer');
-const {saveImg, saveArtwork, savePhoto, saveSketch, saveSprites, readAllImgs, readOneImg, updateOneImg, deleteOneImg} = require('../controllers/imageController');
+const {saveImg, saveArtwork, savePhoto, saveSketch, saveSprites, readAllImgs, readOneImg, updateOneImg, deleteOneImg, readFromS3} = require('../controllers/imageController');
 const router = express.Router();
 
 // storage variable to upload file and provide destination folder
@@ -32,7 +32,7 @@ router.post('/save-sprites', upload.single('image'), saveSprites);
 // get requests
 router.get('/all-images/:type', readAllImgs)
 router.get('/single-image/:img', readOneImg)
-router.get('/image/:key')
+router.get('/image/:key', readFromS3)
 
 // patch requests
 router.patch('/update-image/:img', updateOneImg)

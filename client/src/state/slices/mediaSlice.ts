@@ -12,10 +12,17 @@ export const mediaApiSlice = apiSlice.injectEndpoints({
             invalidatesTags: [
                 {type: 'Images', id: 'LIST'}
             ] 
+        }),
+        readAllMedia: builder.query<any, any>({
+            query: (type) => ({
+                url: `img/all-images/${type}`,
+                method: 'GET'
+            })
         })
     })
 })
 
 export const {
-    useSaveMediaMutation
+    useSaveMediaMutation,
+    useReadAllMediaQuery
 } = mediaApiSlice

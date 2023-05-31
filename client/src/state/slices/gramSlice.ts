@@ -14,8 +14,32 @@ interface FilterKeys {
     displayWEBGL: string;
 }
 
+interface Res {
+    url: string,
+    key: string
+}
+
+interface Resolutions {
+    res_1536: Res
+    res_1280: Res
+    res_1024: Res
+    res_768: Res
+    res_640: Res
+    res_320: Res
+}
+
+interface NewPhoto {
+    type: string;
+    description: string;
+    title: string;
+    authors: string[];
+    source: Resolutions | Object;
+    details: Resolutions[];
+}
+
 interface GramState {
-    filterKeys: FilterKeys
+    filterKeys: FilterKeys,
+    newMedia: NewPhoto
 }
 
 const initialState: GramState = {
@@ -30,6 +54,14 @@ const initialState: GramState = {
         useFilter: false,
         display2D: "block",
         displayWEBGL: "hidden"
+    },
+    newMedia: {
+        type: "",
+        description: "",
+        title: "",
+        authors: [],
+        source: {},
+        details: []
     }
 }
 
@@ -39,14 +71,45 @@ export const gramSlice = createSlice({
     reducers: {
         setFilterKeys(state, action) {
             state.filterKeys = action.payload;
-        }
+        },
+        setType(state, action) {
+            state.newMedia.type = action.payload;
+        },
+        setDescription(state, action) {
+            state.newMedia.description = action.payload;
+        },
+        setTitle(state, action) {
+            state.newMedia.title = action.payload;
+        },
+        setAuthors(state, action) {
+            let temp = state.newMedia.authors.slice();
+            temp.push(action.payload);
+
+            state.newMedia.authors = temp;
+        },
+        setSource(state, action) {
+            state.newMedia.source = action.payload;
+        },
+        setDetails(state, action) {
+            let temp = state.newMedia.details.slice();
+            temp.push(action.payload);
+
+            state.newMedia.details = temp;
+        },
+        
     }
 });
 
 export const getFilterKeys = (state: RootState) => state.gram.filterKeys;
 
 export const {
-    setFilterKeys
+    setFilterKeys,
+    setType,
+    setDescription,
+    setTitle,
+    setAuthors,
+    setSource,
+    setDetails
 } = gramSlice.actions;
 
 export default gramSlice.reducer;

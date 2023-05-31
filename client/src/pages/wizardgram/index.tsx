@@ -1,10 +1,14 @@
 import { useWindowSize } from "@/hooks/useWindowSize";
+import { setType } from "@/state/slices/gramSlice";
+import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 
 function WizardGram() {
     const [showModal, setShowModal] = useState(false);
     const windowSize = useWindowSize();
     const modalRef = useRef<HTMLDivElement>(null);
+    const dispatch = useDispatch();
 
     function onShow() {
         setShowModal(true);
@@ -26,7 +30,10 @@ function WizardGram() {
             document.removeEventListener('click', handleHide, true);
         }
     }, [onHide]);
-    
+
+    function addType(e: any) {
+        dispatch(setType(e.target.textContent));
+    }
 
     return (
         <React.Fragment>
@@ -87,15 +94,15 @@ function WizardGram() {
                     <h3 className="m-0 py-2 sm:py-2.5 md:py-3">Create New Post</h3>
                 </div>
                 <div className="w-full p-0 cursor-pointer flex flex-col">
-                    <button className="w-full py-2 pl-1 sm:py-3 sm:pl-2 md:py-4 md:pl-3  cursor-pointer text-left">Photography</button>
+                    <Link className="w-full py-2 pl-1 sm:py-3 sm:pl-2 md:py-4 md:pl-3  cursor-pointer text-left" href='/wizardgram/new' onClick={(e) => {return addType(e)}}>Photography</Link>
                     <div className="w-full p-0 cursor-pointer border-b-2 self-end"></div>
                 </div>
                 <div className="w-full p-0 cursor-pointer flex flex-col">
-                    <button className="w-full py-2 pl-1 sm:py-3 sm:pl-2 md:py-4 md:pl-3  cursor-pointer text-left">Artworks</button>
+                    <Link className="w-full py-2 pl-1 sm:py-3 sm:pl-2 md:py-4 md:pl-3  cursor-pointer text-left" href='/wizardgram/new' onClick={(e) => {return addType(e)}}>Artworks</Link>
                     <div className="w-full p-0 cursor-pointer border-b-2 self-end"></div>
                 </div>
                 <div className="w-full p-0 cursor-pointer flex flex-col">
-                    <button className="w-full py-2 pl-1 sm:py-3 sm:pl-2 md:py-4 md:pl-3  cursor-pointer text-left">Generative</button>
+                    <Link className="w-full py-2 pl-1 sm:py-3 sm:pl-2 md:py-4 md:pl-3  cursor-pointer text-left" href='/wizardgram/new' onClick={(e) => {return addType(e)}}>Generative</Link>
                     <div className="w-full p-0 cursor-pointer border-b-2 self-end"></div>
                 </div>
             </div>

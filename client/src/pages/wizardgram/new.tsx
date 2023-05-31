@@ -38,8 +38,6 @@ function NewPost() {
         console.log(allMedia)
     }, [allMedia])
 
-
-
     return (
         <div className="flex flex-col w-screen h-screen xs:text-sm sm:text-base md:text-lg lg:text-2xl" style={{width: `calc(${windowSize[0]*0.01}px*100)`, height: `calc(${windowSize[1]*0.01}px*100)`}}>
             <div className="flex justify-between items-center border-b-2">

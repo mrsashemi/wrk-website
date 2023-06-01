@@ -1,8 +1,10 @@
 import Canvas from "@/components/wizardgram/canvas";
 import { useWindowSize } from "@/hooks/useWindowSize";
+import { setCanvasImg } from "@/state/slices/gramSlice";
 import { useReadAllMediaQuery, useSaveMediaMutation } from "@/state/slices/mediaSlice";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 
 
 function NewPost() {
@@ -10,6 +12,9 @@ function NewPost() {
     const hiddenFileInput = useRef(null);
     const [addMedia] = useSaveMediaMutation();
     const allMedia = useReadAllMediaQuery('originals');
+    const dispatch = useDispatch();
+
+    const [gridReady, setGridReady] = useState<boolean>(false)
 
     const handleClick = (e: any) => {
         (hiddenFileInput.current as any).click();
@@ -35,6 +40,14 @@ function NewPost() {
     }
 
     useEffect(() => {
+        if (allMedia.isSuccess) {
+            let temp = allMedia.currentData.slice();
+            temp.sort((a: any, b: any) => {return Date.parse(b.date) - Date.parse(a.date)});
+            allMedia.currentData = temp;
+
+            setGridReady(true);
+            dispatch(setCanvasImg(allMedia.currentData[0].resolutions.res_1536.key))
+        }
         console.log(allMedia)
     }, [allMedia])
 
@@ -45,7 +58,7 @@ function NewPost() {
                 <h2 className="xs:text-base sm:text-lg md:text-xl lg:text-3xl">New Post</h2>
                 <button className="px-1 border-l-2 sm:p-2 md:px-3 lg:p-3 lg:px-4">Next</button>
             </div>
-            <Canvas 
+            {gridReady && <Canvas 
                 margins={'m-2'}
                 divWidth={''} 
                 scale={`xs:w-76 xs:h-76 sm:w-96 sm:h-96 md:w-128 md:h-128 lg:w-136 lg:h-136 2xl:w-144 2xl:h-144`}
@@ -58,16 +71,22 @@ function NewPost() {
                 strength={1.0}
                 useFilter={false}
                 display2D={"block"}
-                displayWEBGL={"hidden"}  />
+                displayWEBGL={"hidden"}  />}
             <div className="flex justify-between items-center border-y-2">
                 <button onClick={handleClick} className="px-1 border-r-2 sm:p-2 md:px-3 lg:p-3 lg:px-4 xs:text-base sm:text-lg md:text-xl lg:text-3xl">Select File</button>
                 <input type="file" ref={hiddenFileInput} onChange={handleChange} className="hidden"/>
             </div>
-            <div className="flex flex-col m-1">
-                <div className="grid">
-                    {allMedia.isSuccess && allMedia.currentData.map((img: any) =>
+            <div className="flex flex-col m-2">
+                <div className="flex flex-wrap gap-2">
+                    {gridReady && allMedia.currentData.map((img: any) =>
                         <div key={img._id}>
-                            <img src={`http://localhost:5050/img/image/${img.resolutions.res_320.key}`} alt={img.name} />
+                            <Image 
+                                src={`http://localhost:5050/img/image/${img.resolutions.res_320.key}`} 
+                                width={320} 
+                                height={320} 
+                                alt={img.name} 
+                                onClick={() => {return dispatch(setCanvasImg(img.resolutions.res_1536.key))}} 
+                                priority/>
                         </div>
                     
                     )}

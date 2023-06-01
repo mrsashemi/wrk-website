@@ -39,7 +39,8 @@ interface NewPhoto {
 
 interface GramState {
     filterKeys: FilterKeys,
-    newMedia: NewPhoto
+    newMedia: NewPhoto,
+    canvasImg: string
 }
 
 const initialState: GramState = {
@@ -62,7 +63,8 @@ const initialState: GramState = {
         authors: [],
         source: {},
         details: []
-    }
+    },
+    canvasImg: ""
 }
 
 export const gramSlice = createSlice({
@@ -73,34 +75,49 @@ export const gramSlice = createSlice({
             state.filterKeys = action.payload;
         },
         setType(state, action) {
-            state.newMedia.type = action.payload;
+            state.newMedia = {...state.newMedia, type: action.payload};
         },
         setDescription(state, action) {
-            state.newMedia.description = action.payload;
+            state.newMedia = {...state.newMedia, description: action.payload};
         },
         setTitle(state, action) {
-            state.newMedia.title = action.payload;
+            state.newMedia = {...state.newMedia, title: action.payload};
         },
         setAuthors(state, action) {
             let temp = state.newMedia.authors.slice();
             temp.push(action.payload);
 
-            state.newMedia.authors = temp;
+            state.newMedia = {...state.newMedia, authors: temp};
         },
         setSource(state, action) {
-            state.newMedia.source = action.payload;
+            state.newMedia = {...state.newMedia, source: action.payload};
         },
         setDetails(state, action) {
             let temp = state.newMedia.details.slice();
             temp.push(action.payload);
 
-            state.newMedia.details = temp;
+            state.newMedia = {...state.newMedia, details: temp};
         },
+        resetNewMedia(state, action) {
+            state.newMedia = {
+                type: "",
+                description: "",
+                title: "",
+                authors: [],
+                source: {},
+                details: []
+            }
+        },
+        setCanvasImg(state, action) {
+            state.canvasImg = action.payload
+        }
         
     }
 });
 
 export const getFilterKeys = (state: RootState) => state.gram.filterKeys;
+export const getNewMedia = (state: RootState) => state.gram.newMedia;
+export const getCanvasImg = (state: RootState) => state.gram.canvasImg;
 
 export const {
     setFilterKeys,
@@ -109,7 +126,9 @@ export const {
     setTitle,
     setAuthors,
     setSource,
-    setDetails
+    setDetails, 
+    resetNewMedia,
+    setCanvasImg
 } = gramSlice.actions;
 
 export default gramSlice.reducer;

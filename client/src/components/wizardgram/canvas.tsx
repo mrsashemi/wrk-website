@@ -4,6 +4,8 @@ import { addTexture, create2Dbuffer, createGLbuffer, prepareShader, setUniform1f
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import portrait from '../../sketches/assets/images/hasibwide.JPG'
+import { useSelector } from "react-redux";
+import { getCanvasImg } from "@/state/slices/gramSlice";
 
 interface CanvasProps {
     margins: string;
@@ -28,6 +30,7 @@ interface AspectRatio {
 
 function Canvas(props:CanvasProps) {
     const [aspect, setAspect] = useState<AspectRatio>()
+    const imgSrc = useSelector(getCanvasImg)
 
     //img
     const img = useRef<HTMLImageElement>(null)
@@ -57,17 +60,41 @@ function Canvas(props:CanvasProps) {
                 setAspect({width: `${ratio*100}%`, height: `${100}%`});
             }
 
-            ctx.current = create2Dbuffer(ctx.current, c.current, w, h, true, i);
-            gl.current = createGLbuffer(gl.current, cFilter.current, w, h);
+            ctx.current = create2Dbuffer(ctx.current, (c.current as HTMLCanvasElement), w, h, false, null);
+            gl.current = createGLbuffer(gl.current, (cFilter.current as HTMLCanvasElement), w, h);
             filter.current = prepareShader(gl.current, vertexUniversal, filterFragment, w, h);
 
             setUniform2f(gl.current, 'res', filter.current, w, h);
-            addTexture(gl.current, gl.current.TEXTURE0, c.current, filter.current, 0, 'img0');
-            addTexture(gl.current, gl.current.TEXTURE1, c.current, filter.current, 1, 'img1');
+            addTexture(gl.current, gl.current.TEXTURE0, (c.current as HTMLCanvasElement), filter.current, 0, 'img0');
+            addTexture(gl.current, gl.current.TEXTURE1, (c.current as HTMLCanvasElement), filter.current, 1, 'img1');
         }
 
-        initCanvas();
+       initCanvas();
+
     }, []);
+
+    const createImg = (imgSrc: string): Promise<HTMLImageElement> => 
+        new Promise((resolve, reject) => {
+            const imge = document.createElement('img');
+            // cors, cross origin allows for images loaded from a foreign object to be used in a canvas.
+            imge.crossOrigin = 'anonymous';
+            imge.onload = () => resolve(imge);
+            imge.onerror = (e) => {
+                reject(e)
+                imgSrc = "LOAD_ERROR";
+            };
+            imge.src = `http://localhost:5050/img/image/${imgSrc}`;
+        })
+
+    useEffect(() => {
+        const changeImg = async () => {
+            const imge = await createImg(imgSrc);
+            (ctx.current as CanvasRenderingContext2D).clearRect(0, 0, (c.current as HTMLCanvasElement).width, (c.current as HTMLCanvasElement).height);
+            return (ctx.current as CanvasRenderingContext2D).drawImage(imge, 0, 0, 1536, 1536)
+        }
+
+        if (imgSrc !== "") changeImg()
+    }, [imgSrc])
 
     useEffect(() => {
         const addFilter = () => {
@@ -99,7 +126,7 @@ function Canvas(props:CanvasProps) {
         <div className={`flex flex-col justify-center self-center ${props.margins} ${props.divWidth} ${props.scale} border-2 border-solid`}>
             <canvas ref={cFilter} className={`${props.displayWEBGL}`} style={aspect}></canvas>
             <canvas ref={c} className={`${props.display2D}`} style={aspect}></canvas>
-            <Image src={portrait} alt="Portrait of Hasib" className="hidden" ref={img} priority/>
+            <Image src={`http://localhost:5050/img/image/${imgSrc}`} width={1536} height={1536} alt="Portrait of Hasib" className="hidden" ref={img} priority/>
         </div>
     )
 }

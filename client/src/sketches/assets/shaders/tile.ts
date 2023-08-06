@@ -80,7 +80,8 @@ export const tileFragment: string = `
     return (var.x+var.y+var.z)/3.0;
   }
 
-  // use the following in place of conditionals to avoid branching (marginal performance improvement compared to if/else)
+  // use the following in place of conditionals to avoid branching (marginal performance improvement compared to if/else *needs testing as Im unsure if it makes a difference on newer GPUs*)
+  // essentially trying to remove if statements by using math instea (for example if false, then one of these functions could result in a multiply by zero)
   float when_eq(float x, float y) {
     return 1.0 - abs(sign(x - y));
   }
@@ -144,10 +145,13 @@ export const tileFragment: string = `
     vec2 uvQuad = fract(uv * divs);
     vec3 color = texture2D(imageTexture, uv).rgb;
     vec4 chicks = texture2D(chick, uv);
+
+    // generates a random index based on the center of the active quadtree tile. The index is used to randomly select a chicken doodle from the imported spritemap
     float randomIndex = hash(center);
 
     color+=((1.0-2.0*color)/(1.0-color))*(1.0-color)*when_eq(invert, 1.0);
 
+    // the following are forumlas to tile an image into a grid. I've adapted it to use the center coordinates of the quadtree tiles as opposed to a preexisting grid. Referencing the technique here: https://glitch.com/~p5js-webcam-shader-template
     // seperate the chicken image into seperate doodles
     float doodleIndex = floor(randomIndex/4.0 * doodleX * doodleY);
     float xDoodleIndex = mod(doodleIndex, doodleX);

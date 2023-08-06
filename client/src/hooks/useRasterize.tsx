@@ -1,3 +1,6 @@
+// This custom hook is a technique based on the following article about creating an accessible canvas via rasterization of the DOM, https://annekagoss.medium.com/accessible-webgl-43d15f9caa21
+// The implementation of the hook is adapted for my specific use case 
+
 import React from 'react'
 import { useDispatch, useSelector} from 'react-redux';
 import { setDomImage } from '@/state/slices/canvasSlice';
@@ -108,6 +111,7 @@ interface Style {
     homeTitle: HomeTitle
 }
 
+// there are likely better ways to write this function that avoids too many if/then statetements but at the moment im unsure what the final requirements will be
 export const updateQueries = async () => {
     let maxSize: number; 
     let portrait;

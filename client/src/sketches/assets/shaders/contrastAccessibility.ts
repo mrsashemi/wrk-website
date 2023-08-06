@@ -166,7 +166,7 @@ export const contrastFragment: string = `
 `
 
 // from https://www.shadertoy.com/view/4tcGW2, slightly tweaked to match the luminance formula above
-// helps with performance as it allows us to use a lower resolution image while saving some of the quality
+// helps with performance as it allows us to use a lower resolution image while saving some of the quality (I sharpen the image twice)
 export const sharpenFragment: string = `
   #ifdef GL_ES
   precision mediump float;

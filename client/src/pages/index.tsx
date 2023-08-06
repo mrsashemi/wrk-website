@@ -21,7 +21,6 @@ export default function Home() {
 
   return (
     <div className='w-screen h-screen m-0 p-0 overflow-hidden' style={{width: `calc(${windowSize[0]*0.01}px*100)`, height: `calc(${windowSize[1]*0.01}px*100)`}}> 
-      <meta content="width=device-width, initial-scale=1" name="viewport" />
       {/*<img src={`${domImage && domImage}`} className='invisible w-fit h-fit pointer-events-none absolute inset-0 z-30' id='dom-img' onMouseMove={(e) => findMousePos(e)}></img>*/}
       {/* {<Chickens1000 />} */}
       <ChickenRipple />

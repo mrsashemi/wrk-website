@@ -196,7 +196,7 @@ export const Chickens1000 = () => {
                 if (generate !== "chickens" && generate !== "lines") size = size/2.5;
               
 
-                if ((((randArr[1] as number) < upperLimit && (randArr[1] as number) > lowerLimit) && (prevArr[1] < upperLimit && prevArr[1] > lowerLimit))) {
+                if ((((randArr[1] as number) < upperLimit && (randArr[1] as number) > lowerLimit) && ((prevArr[1] as number)< upperLimit && (prevArr[1] as number) > lowerLimit))) {
                     if ((dist < distance)) {
                         const quadtree = qtree.current;
                         let thinAmount = size/thinningScale;
@@ -246,7 +246,7 @@ export const Chickens1000 = () => {
 
     return (
         <React.Fragment>
-            <canvas ref={c} className="absolute inset-0 w-full h-full overflow-hidden z-20 bg-black"/>
+            <canvas ref={c} className="absolute inset-0 w-full h-full overflow-hidden z-20 bg-transparent"/>
             <canvas ref={c0} className="invisible"/>
             <canvas ref={c1} className="invisible"/>
             <canvas ref={c2} className="invisible"/>

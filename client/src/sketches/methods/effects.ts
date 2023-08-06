@@ -1,6 +1,10 @@
 import { RoughCanvas } from "roughjs/bin/canvas";
 import { Point } from "roughjs/bin/geometry";
 
+// Using image bitmaps allows to keep raw bitmap data readily available to be used by the GPU, and is more performant
+// https://developer.mozilla.org/en-US/docs/Web/API/ImageBitmap
+// Bitmaps can be painted directly by the GPU, with no other operations required.
+// ImageData represents raw pixel values that can only be read by the CPU, so it would otherwise need to be read then moved to the GPU before it can be painted.
 export const loadChickens = async (spritesheet: HTMLImageElement, spriteJSON: any) => {
     let lineSprites: ImageBitmap[] = [];
     let detailSprites: ImageBitmap[] = [];

@@ -62,7 +62,7 @@ export const useRasterize = (props: Props): void => {
         loadRasterizedDom();
         window.addEventListener('load', () => loadRasterizedDom());
         window.addEventListener('resize', () => loadRasterizedDom());
-        
+
         return () => {
             window.removeEventListener('load', () => loadRasterizedDom());
             window.removeEventListener('resize', () => loadRasterizedDom());

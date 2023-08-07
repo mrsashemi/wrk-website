@@ -6,43 +6,93 @@ import { Point } from "roughjs/bin/geometry";
 // Bitmaps can be painted directly by the GPU, with no other operations required.
 // ImageData represents raw pixel values that can only be read by the CPU, so it would otherwise need to be read then moved to the GPU before it can be painted.
 export const loadChickens = async (spritesheet: HTMLImageElement, spriteJSON: any) => {
-    let lineSprites: ImageBitmap[] = [];
-    let detailSprites: ImageBitmap[] = [];
-    let otherDetailSprites: ImageBitmap[] = [];
-    let bodySprites: ImageBitmap[] = [];
-    
-    for (let i = 0; i < 2; i++) {
-        lineSprites.push(await createImageBitmap(
+    // I am testing different solutions to the loadChickens function using Promise.all to make the async calls in parallel
+    // Initially, I was running the async calls one after the other using async/await.
+    // I'm still wrapping my head around this method, but it should be more efficient for error handling and "failing fast"
+    // https://stackoverflow.com/questions/11488014/asynchronous-process-inside-a-javascript-for-loop
+    // https://stackoverflow.com/questions/45285129/any-difference-between-await-promise-all-and-multiple-await
+    const numSprites = 10;
+    const spritePromises = Array.from({ length: numSprites}, (_, i) => {
+        const linePromise = createImageBitmap(
             spritesheet, 
             spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["x"], 
             spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["y"], 
             spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["w"],
-            spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["h"])
-        )
-        detailSprites.push(await createImageBitmap(
+            spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["h"]);
+
+        const detailPromise = createImageBitmap(
             spritesheet, 
             spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["x"], 
             spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["y"], 
             spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["w"],
             spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["h"]
-        ))
-
-        otherDetailSprites.push(await createImageBitmap(
+        )
+        
+        const otherDetailPromise = createImageBitmap(
             spritesheet, 
             spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["x"], 
             spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["y"], 
             spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["w"],
             spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["h"]
-        ))
+        )
 
-        bodySprites.push(await createImageBitmap(
+        const bodyPromise = createImageBitmap(
             spritesheet, 
             spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["x"], 
             spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["y"], 
             spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["w"],
             spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["h"]
-        ))
-    }
+        )
+
+        return Promise.all([linePromise, detailPromise, otherDetailPromise, bodyPromise])
+    })
+
+    const allSprites = await Promise.all(spritePromises);
+
+    const lineSprites = allSprites.map(sprites => sprites[0]);
+    const detailSprites = allSprites.map(sprites => sprites[1]);
+    const otherDetailSprites = allSprites.map(sprites => sprites[2]);
+    const bodySprites = allSprites.map(sprites => sprites[3]);
+
+
+
+    // let lineSprites: ImageBitmap[] = [];
+    // let detailSprites: ImageBitmap[] = [];
+    // let otherDetailSprites: ImageBitmap[] = [];
+    // let bodySprites: ImageBitmap[] = [];
+    
+    // for (let i = 0; i < 2; i++) {
+    //     lineSprites.push(await createImageBitmap(
+    //         spritesheet, 
+    //         spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["x"], 
+    //         spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["y"], 
+    //         spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["w"],
+    //         spriteJSON.frames[`chickenlines-${i}.png`]["frame"]["h"]))
+
+    //     detailSprites.push(await createImageBitmap(
+    //         spritesheet, 
+    //         spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["x"], 
+    //         spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["y"], 
+    //         spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["w"],
+    //         spriteJSON.frames[`chickendetail-${i}.png`]["frame"]["h"]
+    //     ))
+
+    //     otherDetailSprites.push(await createImageBitmap(
+    //         spritesheet, 
+    //         spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["x"], 
+    //         spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["y"], 
+    //         spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["w"],
+    //         spriteJSON.frames[`chickenotherdetail-${i}.png`]["frame"]["h"]
+    //     ))
+
+    //     bodySprites.push(await createImageBitmap(
+    //         spritesheet, 
+    //         spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["x"], 
+    //         spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["y"], 
+    //         spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["w"],
+    //         spriteJSON.frames[`chickenbody-${i}.png`]["frame"]["h"]
+    //     ))
+    // }
 
     return {lines: lineSprites, detail: detailSprites, otherdetail: otherDetailSprites, body: bodySprites};
 }
@@ -55,7 +105,7 @@ interface Sprites {
 }
 
 export function drawChicken(x: number, y: number, w: number, h: number, ctx: CanvasRenderingContext2D, col: number[], col2: number[], sprites: Sprites) {
-    let chkn = Math.floor(Math.random()*2);
+    let chkn = Math.floor(Math.random()*10);
 
     //lines and tinted are the same
     let tinted = tint(sprites.lines[chkn], [0, 0, 0]);

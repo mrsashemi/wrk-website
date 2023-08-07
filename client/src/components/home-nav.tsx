@@ -1,5 +1,5 @@
 import { useLongPress } from "@/hooks/useLongpress";
-import { getCanvasSize, getInvert, setHovering, setInvert, setMousePos } from "@/state/slices/canvasSlice";
+import { getCanvasSize, getHovering, getInvert, setHovering, setInvert, setMousePos } from "@/state/slices/canvasSlice";
 import { getHomeNavContainer, getHomeNavLinks, getHomeTitle } from "@/state/slices/pageSlice";
 import React, { useRef } from "react"
 import { useDispatch, useSelector } from "react-redux";
@@ -45,6 +45,7 @@ export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttri
   const homeTitle = useSelector(getHomeTitle);
   const canvasSize = useSelector(getCanvasSize);
   const isInvert = useSelector(getInvert);
+  const isHover = useSelector(getHovering);
   const titleRef = useRef<any>(null);
   const dispatch = useDispatch();
   useLongPress({duration: 100, element: titleRef.current})
@@ -91,7 +92,7 @@ export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttri
     title: { // different fontsize, lineheight, marginRight, marginBottom
       textAlign: "right",
       fontWeight: "100", 
-      color: (props.opaq) ? 'white' : 'transparent',
+      color: (props.opaq) ? ((isHover) ? 'red' : 'white') : 'transparent',
       ...homeTitle
     }
   }
@@ -117,7 +118,8 @@ export const HomeNav: React.ForwardRefExoticComponent<HomeProps & React.RefAttri
             return dispatch(setHovering(true))}}
           onMouseLeave={() => {
             props.setTitle('WIZARDS ROBBING KIDS')
-            return dispatch(setHovering(false))}}>{props.title}</h1>
+            return dispatch(setHovering(false))}}>{props.title}
+        </h1>
       </div>
       <nav style={styles.navContainer}>
         <div style={styles.navLinks}>About</div>

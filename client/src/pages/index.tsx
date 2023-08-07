@@ -7,7 +7,6 @@ import { ChickenRipple } from '@/sketches/chickenRipple';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { Chickens1000 } from '@/sketches/1000chickens';
 
-
 export type RefHandler = {
   stateHoldingRef: RefObject<HTMLDivElement>,
   serializeThisRef: RefObject<HTMLDivElement>
@@ -30,6 +29,7 @@ export default function Home() {
 }
 
 // Use refs to create two copies of the UI, one transparent and one hidden that will be sent to WEBGL during the rasterization step.
+// As of right now, the home component has access to its grandchildrens' refs. Tt's technically unnecessary to do this because we're only making use of HomeNavShader's access to its childrens ref, but I'm retaining the code in case I'd like to use the access for future functionality.
 export const HomeNavShader = React.forwardRef((props, ref) => {
   const [title, setTitle] = useState('WIZARDS ROBBING KIDS');
   const [dummy, setDummy] = useState('');
@@ -43,10 +43,12 @@ export const HomeNavShader = React.forwardRef((props, ref) => {
     events: [title],
   })
 
+  // React does not directly support forwarding multiple refs in typescript. With useImperativeHandle, we can customize the instance value that is exposed to the parent component to equal two Div Components.
+  // https://stackoverflow.com/questions/73174377/forwarding-multiple-ref-in-typescript
   useImperativeHandle(ref, () => ({
     serializeThisRef: serializeThisRef,
     stateHoldingRef: stateHoldingRef
-  }));
+  }), []);
 
   
   return (
